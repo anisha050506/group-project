@@ -1,2 +1,0 @@
-# group-project 
-#description of the group project:Other real estate companies manage real apartments and then will have WG features included. In a student setting like St. Gallen, that is not a small aspect. Our program aims to develop the WG feature only onto a housing market. But it’s not only a Flatfox for WGs: through its centralized processing of verified data, our underlying programs optimize the search, contain computer generated processes for admin and use the data for extra features (for the moment we are only concentrating on organizing dinner parties).  
