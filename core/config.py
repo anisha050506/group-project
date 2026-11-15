@@ -5,20 +5,13 @@ OWNER:    Person B – Data   (change only after agreeing with the group!)
 -------------------------------------------------------------------------------
 PURPOSE
     ONE place for every name and choice list that several files share.
-    Everyone imports from here instead of typing strings themselves, e.g.
+    IMPORT from here instead of typing strings, e.g.
         from core.config import SLIDERS, GENDERS
     -> change something here once, and the whole app follows.
-
-WHERE TO CHANGE WHAT  (search for "✏️" in this file)
-    ✏️ 1  Behavioural sliders  -> add / remove / rename lifestyle questions
-    ✏️ 2  Profile choice lists -> genders, languages, degrees, study levels
-    ✏️ 3  WG choice lists      -> districts, amenities, WG types, smoking
-    ✏️ 4  Limits               -> max rent, max travel time
 
 WHAT DOES NOT BELONG HERE
     - functions, database queries, Streamlit code
 
-STATUS:   Step 3 – review together in the group meeting.
 AI NOTE:  Generated with Claude (Anthropic), 15.11.2026 – see docs/ai_usage.md
 ===============================================================================
 """
@@ -46,13 +39,7 @@ ROLES = {
 # ✏️ 1  BEHAVIOURAL SLIDERS (scale 0–10)
 # -----------------------------------------------------------------------------
 # Seekers AND WG members answer the same questions, so they can be compared.
-#
-# HOW TO CHANGE
-#   - Add a question:    copy one line, give it a new key + texts.
-#   - Remove a question: delete its line.
-#   - Rename the text:   change "label", "low" or "high" (safe any time).
-#   - Rename the KEY:    the key is the database column name -> only change
-#                        it together with the group.
+
 #   After adding / removing / renaming a key: delete data/wg_match.db (or run
 #   the seed script again). The profile page, the database table and the
 #   match score adapt automatically – no other file needs editing.
