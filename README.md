@@ -65,9 +65,13 @@ group-project/
 │   ├── config.py      shared names & choice lists – change sliders/lists HERE
 │   ├── database.py    SQLite tables + all read/write functions
 │   ├── auth.py        registration, login, password hashing
+│   ├── matching.py    hard filters, compatibility score, ranking
+│   ├── ml_model.py    our own ML model (approach to be defined)
 │   └── transport_api.py   travel time to HSG (transport.opendata.ch)
 ├── components/        reusable page pieces
-│   └── layout.py      login check, sidebar with logout, "under construction" box
+│   ├── layout.py      login check, sidebar with logout, "under construction" box
+│   ├── cards.py       WG card / seeker card
+│   └── charts.py      radar chart, score gauge, rent per district, map
 ├── docs/
 │   └── database_schema.md   overview of all database tables
 ├── README.md          project description and instructions (this file, not part of the app)
