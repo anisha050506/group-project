@@ -51,9 +51,23 @@ group-project/
 ├── .gitignore         files Git never uploads (database, virtual env, secrets)
 ├── .streamlit/
 │   └── config.toml    look of the app (colours, font)
+├── app.py             ENTRY POINT – start with: streamlit run app.py (routing)
+├── views/             one file per page (what the user sees)
+│   ├── login.py             log in (+ temporary developer shortcut)
+│   ├── register.py          create account with HSG email, choose role
+│   ├── profile.py           personal profile, 8 lifestyle sliders, role switch
+│   ├── search_criteria.py   seekers: max rent, move-in date, travel time …
+│   ├── wg_listing.py        providers: create / edit the WG listing
+│   ├── swipe.py             one card at a time, sorted by match score
+│   ├── matches.py           matches, chat, viewing, offer, feedback
+│   └── insights.py          charts + ML output
 ├── core/              app logic (plain Python, no Streamlit code)
 │   ├── config.py      shared names & choice lists – change sliders/lists HERE
-│   └── database.py    SQLite tables + all read/write functions
+│   ├── database.py    SQLite tables + all read/write functions
+│   ├── auth.py        registration, login, password hashing
+│   └── transport_api.py   travel time to HSG (transport.opendata.ch)
+├── components/        reusable page pieces
+│   └── layout.py      login check, sidebar with logout, "under construction" box
 ├── docs/
 │   └── database_schema.md   overview of all database tables
 ├── README.md          project description and instructions (this file, not part of the app)
