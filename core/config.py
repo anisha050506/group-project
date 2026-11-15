@@ -36,7 +36,7 @@ ROLES = {
 
 
 # =============================================================================
-# ✏️ 1  BEHAVIOURAL SLIDERS (scale 0–10)
+#  1  BEHAVIOURAL SLIDERS (scale 0–10)
 # -----------------------------------------------------------------------------
 # Seekers AND WG members answer the same questions, so they can be compared.
 
@@ -73,7 +73,7 @@ MATCH_WEIGHTS = {key: 1.0 for key in SLIDER_KEYS}
 
 
 # =============================================================================
-# ✏️ 2  PROFILE CHOICE LISTS
+#  2  PROFILE CHOICE LISTS
 # -----------------------------------------------------------------------------
 # HOW TO CHANGE: add / remove / rename entries inside the [ ].
 # The dropdowns on the profile and search pages update automatically.
@@ -86,7 +86,7 @@ STUDY_LEVELS = ["Assessment", "Bachelor", "Master", "PhD", "Exchange"]
 
 
 # =============================================================================
-# ✏️ 3  WG CHOICE LISTS
+#  3  WG CHOICE LISTS
 # -----------------------------------------------------------------------------
 # HOW TO CHANGE: add / remove / rename entries inside the [ ].
 # The WG listing form updates automatically.
@@ -101,7 +101,7 @@ SMOKING_OPTIONS = ["No", "Balcony only", "Yes"]
 
 
 # =============================================================================
-# ✏️ 4  LIMITS FOR INPUT FIELDS
+#  4  LIMITS FOR INPUT FIELDS
 # =============================================================================
 MAX_RENT_CHF = 2000          # highest value on the "max rent" input
 MAX_TRAVEL_TIME_MIN = 60     # highest value on the "max travel time" slider
