@@ -36,15 +36,18 @@ python -m venv .venv
 # 3. Install all required libraries
 pip install -r requirements.txt
 
-# 4. Start the app (opens http://localhost:8501 in the browser)
+# 4. Create the test database with fake users and WGs (once, or to reset)
+python -m data.seed_data
+
+# 5. Start the app (opens http://localhost:8501 in the browser)
 streamlit run app.py
 ```
 
 All required libraries are listed in `requirements.txt`.
 
-## 3. Folder structure
+**Test accounts** (created by the seed script, password `demo1234`): `ana.demo@student.unisg.ch` (seeker), `jonas.demo@student.unisg.ch` (WG provider). Until login is coded, use the **Developer shortcut** on the login page.
 
-*This section is filled in step by step as the structure is built.*
+## 3. Folder structure
 
 ```
 group-project/
@@ -72,8 +75,13 @@ group-project/
 │   ├── layout.py      login check, sidebar with logout, "under construction" box
 │   ├── cards.py       WG card / seeker card
 │   └── charts.py      radar chart, score gauge, rent per district, map
+├── data/
+│   ├── seed_data.py   creates fake users, WGs, swipes and feedback
+│   └── wg_match.db    the database (created automatically, not on GitHub)
 ├── docs/
-│   └── database_schema.md   overview of all database tables
+│   ├── database_schema.md      overview of all database tables
+│   ├── contribution_matrix.md  who did what (shown in the video)
+│   └── ai_usage.md             AI use log + citation rules (shown in the video)
 ├── README.md          project description and instructions (this file, not part of the app)
 └── requirements.txt   all libraries needed to run the app
 ```
@@ -106,9 +114,9 @@ group-project/
 | 4 | User interaction | Profile, search criteria, WG listing, swiping, chat *(to be built)* |
 | 5 | Own trained ML model | *(approach to be defined)* |
 | 6 | Well-documented source code | Comments and file headers in every file |
-| 7 | Contribution matrix + GenAI reflection | `docs/` *(to be added)* |
+| 7 | Contribution matrix + GenAI reflection | `docs/contribution_matrix.md`, `docs/ai_usage.md` |
 | 8 | 4-minute video with own voice-over | Submitted on Canvas by 10.12.2026 |
 
 ## 7. Use of AI
 
-AI tools were used as an aid and, where marked, to generate code. Every AI-generated code block is cited directly in the source code. The full log will be in `docs/ai_usage.md`.
+AI tools were used as an aid and, where marked, to generate code. Every AI-generated code block is cited directly in the source code. The full log is in `docs/ai_usage.md`.
