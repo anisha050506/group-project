@@ -1,0 +1,21 @@
+# Python cache files (created automatically)
+__pycache__/
+*.pyc
+
+# Virtual environments (each person has their own)
+.venv/
+venv/
+
+# Local data – everyone generates their own test database
+data/*.db
+
+# Trained ML model files (created by running the code)
+models/*.pkl
+
+# Secrets (passwords / API keys) – never on GitHub
+.streamlit/secrets.toml
+
+# Personal editor and system files
+.vscode/
+.idea/
+.DS_Store

@@ -48,6 +48,9 @@ All required libraries are listed in `requirements.txt`.
 
 ```
 group-project/
+├── .gitignore         files Git never uploads (database, virtual env, secrets)
+├── .streamlit/
+│   └── config.toml    look of the app (colours, font)
 ├── README.md          project description and instructions (this file, not part of the app)
 └── requirements.txt   all libraries needed to run the app
 ```

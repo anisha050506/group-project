@@ -1,0 +1,7 @@
+# Look of the app. Colours can be changed at any time.
+[theme]
+primaryColor = "#2E7D6B"              # buttons, sliders, links
+backgroundColor = "#FFFFFF"           # page background
+secondaryBackgroundColor = "#F3F6F5"  # sidebar, input fields
+textColor = "#1F2A2E"
+font = "sans serif"
