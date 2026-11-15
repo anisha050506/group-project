@@ -51,6 +51,11 @@ group-project/
 ├── .gitignore         files Git never uploads (database, virtual env, secrets)
 ├── .streamlit/
 │   └── config.toml    look of the app (colours, font)
+├── core/              app logic (plain Python, no Streamlit code)
+│   ├── config.py      shared names & choice lists – change sliders/lists HERE
+│   └── database.py    SQLite tables + all read/write functions
+├── docs/
+│   └── database_schema.md   overview of all database tables
 ├── README.md          project description and instructions (this file, not part of the app)
 └── requirements.txt   all libraries needed to run the app
 ```
