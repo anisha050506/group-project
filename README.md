@@ -95,28 +95,9 @@ group-project/
 | *Name* | | |
 | *Name* | | |
 
-## 5. Git workflow
 
-1. `git pull` before you start working.
-2. Work on your own branch: `git checkout -b feature/<your-area>`.
-3. Only edit the files you are responsible for. Ask before changing someone else's file.
-4. Commit small and often with a clear message, e.g. `git commit -m "Add compatibility score"`.
-5. Push and open a **pull request**. One teammate reviews it before it is merged into `main`.
-6. When you add a new library, add it to `requirements.txt` in the same commit.
 
-## 6. Grading requirements
 
-| # | Requirement | Where it is covered |
-|---|---|---|
-| 1 | Problem clearly stated | Section 1 of this README, video |
-| 2 | Data via API and/or database | SQLite database + transport.opendata.ch API *(to be built)* |
-| 3 | Data visualization | Insights page and charts *(to be built)* |
-| 4 | User interaction | Profile, search criteria, WG listing, swiping, chat *(to be built)* |
-| 5 | Own trained ML model | *(approach to be defined)* |
-| 6 | Well-documented source code | Comments and file headers in every file |
-| 7 | Contribution matrix + GenAI reflection | `docs/contribution_matrix.md`, `docs/ai_usage.md` |
-| 8 | 4-minute video with own voice-over | Submitted on Canvas by 10.12.2026 |
-
-## 7. Use of AI
+## 5. Use of AI
 
 AI tools were used as an aid and, where marked, to generate code. Every AI-generated code block is cited directly in the source code. The full log is in `docs/ai_usage.md`.
