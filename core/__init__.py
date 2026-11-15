@@ -1,5 +1,7 @@
 """
-core/  =  the "brain" of the app: plain Python logic, NO Streamlit (st.*) calls.
+THIS FILE ONLY EXPLAINS WHAT IS IN THE "CORE" FOLDER --> NO CODING HERE
+
+core/  =  the "brain" of the app: plain Python logic, NO Streamlit calls.
 
 Why? Code without st.* can be tested on its own (e.g. in a notebook or with
 python -c "..."), and it can be reused by several pages.
