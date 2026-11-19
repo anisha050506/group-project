@@ -139,6 +139,78 @@ def wg_profile(conn, wg_id: int) -> dict:
 
 
 # =============================================================================
+# Named test accounts (documented in test_accounts.txt)
+# =============================================================================
+# These 16 fictional accounts each have their OWN password (unlike the shared
+# DEMO_PASSWORD users). They are recreated here so they really exist on every
+# deploy and in every fresh local database, matching test_accounts.txt. No
+# swipes/matches are pre-created for them (same as the doc).
+NAMED_TEST_SEEKERS = [
+    ("Lena Meier", "wgtest.lena.meier@student.unisg.ch", "r4yVo_R6NmghzpKN"),
+    ("Noah Keller", "wgtest.noah.keller@student.unisg.ch", "tDKEdcCgAWSMsQOi"),
+    ("Mila Brunner", "wgtest.mila.brunner@student.unisg.ch", "da5lCL2046g-83mP"),
+    ("Luca Rossi", "wgtest.luca.rossi@student.unisg.ch", "RzKtDCS9n20XfoQz"),
+    ("Emma Weber", "wgtest.emma.weber@student.unisg.ch", "L6PZA_om5JVqEeEo"),
+    ("Elias Huber", "wgtest.elias.huber@student.unisg.ch", "jTtjsuNwcBj3UWBF"),
+    ("Sofia Schmid", "wgtest.sofia.schmid@student.unisg.ch", "NZuojVbLTnaiU48q"),
+    ("Leon Fischer", "wgtest.leon.fischer@student.unisg.ch", "IKH13FYcddgaa9NI"),
+]
+NAMED_TEST_WGS = [
+    {"title": "TEST - Rotmonten Kitchen WG", "district": "Rotmonten", "rent": 720,
+     "main": ("Nina Baumann", "wgtest.nina.baumann@student.unisg.ch", "Pshq7885I-QK8sQu"),
+     "flatmate": ("Alina Steiner", "wgtest.alina.steiner@student.unisg.ch", "0Rc2L3dgb0gXp3zs")},
+    {"title": "TEST - Quiet Rosenberg WG", "district": "Rosenberg", "rent": 850,
+     "main": ("David Frei", "wgtest.david.frei@student.unisg.ch", "O4OHFYzT83DNSKYe"),
+     "flatmate": ("Jan Dubois", "wgtest.jan.dubois@student.unisg.ch", "MvJYRqj2BNBPRQoT")},
+    {"title": "TEST - City Study WG", "district": "Zentrum", "rent": 950,
+     "main": ("Sara Gerber", "wgtest.sara.gerber@student.unisg.ch", "vVTTNMCQreW5dBVa"),
+     "flatmate": ("Chiara Bianchi", "wgtest.chiara.bianchi@student.unisg.ch", "wx17qtc2spclRcqh")},
+    {"title": "TEST - Relaxed Langgasse WG", "district": "Langgasse", "rent": 680,
+     "main": ("Tim Moser", "wgtest.tim.moser@student.unisg.ch", "B1wM56o1Y7BnNhIk"),
+     "flatmate": ("Nico Costa", "wgtest.nico.costa@student.unisg.ch", "n_CsBeDmSM9MGvHu")},
+]
+
+
+def add_named_test_accounts(conn, today: datetime.date) -> None:
+    """Create the 16 documented wgtest.* accounts, each with its own password,
+    a complete profile, and (for providers) a verified WG with a flatmate."""
+    for name, email, pw in NAMED_TEST_SEEKERS:
+        user_id = make_user(conn, auth.hash_password(pw), "search_wg", email,
+                            name.split()[0], random_sliders(), bio=f"{name} (test account).")
+        insert(conn, "search_criteria", {
+            "user_id": user_id,
+            "max_rent": random.choice([700, 800, 900, 1000]),
+            "move_in_date": (today + datetime.timedelta(days=random.randint(30, 120))).isoformat(),
+            "max_travel_time": random.choice([15, 20, 25, 30]),
+            "preferred_flatmate_gender": "any",
+            "smoker": 0,
+        })
+
+    for wg in NAMED_TEST_WGS:
+        lat, lon, minutes = DISTRICT_INFO.get(wg["district"], DEFAULT_DISTRICT_INFO)
+        wg_id = insert(conn, "wgs", {
+            "title": wg["title"], "address": f"{wg['district']}strasse {random.randint(1, 60)}",
+            "district": wg["district"], "postcode": "9000", "latitude": lat, "longitude": lon,
+            "rent_chf": wg["rent"], "utilities_chf": 80, "deposit_chf": wg["rent"] * 2,
+            "room_size_m2": random.randint(12, 20), "flat_size_m2": random.randint(70, 110),
+            "num_rooms": random.choice([3.5, 4, 4.5]), "num_flatmates": 2,
+            "furnished": 1, "private_bathroom": 0, "balcony": 1,
+            "amenities": "Washing machine,Wi-Fi,Dishwasher",
+            "available_from": (today + datetime.timedelta(days=random.randint(14, 90))).isoformat(),
+            "min_rental_months": 6, "wg_type": WG_TYPES[-1], "smoking_allowed": SMOKING_OPTIONS[0],
+            "pets_allowed": 0, "preferred_gender": "any", "travel_time_min": minutes,
+            "description": f"{wg['title']} - fictional demo listing.", "is_verified": 1,
+        })
+        vibe = random_sliders()
+        for role_key, is_main in (("main", 1), ("flatmate", 0)):
+            name, email, pw = wg[role_key]
+            member_id = make_user(conn, auth.hash_password(pw), "offer_wg", email,
+                                  name.split()[0], random_sliders(base=vibe, spread=1.5),
+                                  bio=f"{name} (test account).")
+            insert(conn, "wg_members", {"wg_id": wg_id, "user_id": member_id, "is_main_tenant": is_main})
+
+
+# =============================================================================
 # Main
 # =============================================================================
 def main() -> None:
@@ -257,6 +329,9 @@ def main() -> None:
             "move_in_date": (today + datetime.timedelta(days=75)).isoformat(),
             "preferred_flatmate_gender": "any", "smoker": 0,
         })
+
+        # --- 3c. Named test accounts (test_accounts.txt) --------------------------
+        add_named_test_accounts(conn, today)
 
         # --- 4. Swipes and matches --------------------------------------------------
         profiles = {wg_id: wg_profile(conn, wg_id) for wg_id in wg_ids}

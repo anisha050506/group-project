@@ -154,7 +154,8 @@ class DatabaseTests(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             seed_data.main()
         database.init_db()
-        self.assertEqual(len(database.get_all_seekers()), 61)
+        # 60 random seekers + Ana (demo) + 8 named test seekers (test_accounts.txt)
+        self.assertEqual(len(database.get_all_seekers()), 69)
         self.assertEqual(len(database.get_training_data()), 300)
         self.assertFalse(database.get_training_data().isna().any().any())
         with contextlib.closing(database.get_connection()) as conn:
