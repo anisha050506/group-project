@@ -4,27 +4,41 @@ from datetime import datetime, timezone
 from html import escape
 from zoneinfo import ZoneInfo
 
+from core.config import BRAND
+
 CHAT_TIMEZONE = ZoneInfo("Europe/Zurich")
 
-CHAT_STYLES = """
-<style>
+# Colours come from BRAND (core/config.py) via CSS variables, so the chat
+# restyles with the rest of the app from that one place.
+_CHAT_PALETTE = (
+    ":root{"
+    f"--wg-accent:{BRAND['accent_dark']};"
+    f"--wg-accent-soft:{BRAND['accent_soft']};"
+    f"--wg-accent-tint:{BRAND['accent_tint']};"
+    f"--wg-ink:{BRAND['ink']};"
+    f"--wg-muted:{BRAND['muted']};"
+    f"--wg-chat-bg:{BRAND['chat_bg']};"
+    "}"
+)
+
+CHAT_STYLES = "<style>\n" + _CHAT_PALETTE + """
 .wg-chat-header {display:flex;align-items:center;gap:14px;padding:8px 0 18px}
-.wg-chat-avatar {display:grid;place-items:center;background:#F6D8CE;color:#C2452B;
+.wg-chat-avatar {display:grid;place-items:center;background:var(--wg-accent-tint);color:var(--wg-accent);
  width:48px;height:48px;border-radius:50%;font-weight:700;flex-shrink:0}
 .wg-chat-title {font-size:1.15rem;font-weight:650;overflow-wrap:anywhere}
-.wg-chat-meta {font-size:.8rem;color:#8A7B90;margin-top:3px}
-.wg-chat-history {padding:12px;background:#F4EADF;border-radius:12px;min-height:390px}
+.wg-chat-meta {font-size:.8rem;color:var(--wg-muted);margin-top:3px}
+.wg-chat-history {padding:12px;background:var(--wg-chat-bg);border-radius:12px;min-height:390px}
 .wg-chat-row {display:flex;margin:8px 0;justify-content:flex-start}
 .wg-chat-row.own {justify-content:flex-end}
-.wg-chat-bubble {max-width:85%;padding:10px 13px;background:#fff;color:#2E2140;
- border-radius:3px 14px 14px 14px;box-shadow:0 1px 2px #2E214018;overflow-wrap:anywhere}
-.own .wg-chat-bubble {background:#FBE0D3;border-radius:14px 3px 14px 14px}
-.wg-chat-sender {font-size:.76rem;font-weight:650;color:#C2452B;margin-bottom:4px}
+.wg-chat-bubble {max-width:85%;padding:10px 13px;background:#fff;color:var(--wg-ink);
+ border-radius:3px 14px 14px 14px;box-shadow:0 1px 2px rgba(46,33,64,0.10);overflow-wrap:anywhere}
+.own .wg-chat-bubble {background:var(--wg-accent-soft);border-radius:14px 3px 14px 14px}
+.wg-chat-sender {font-size:.76rem;font-weight:650;color:var(--wg-accent);margin-bottom:4px}
 .wg-chat-text {white-space:pre-wrap;line-height:1.5}
-.wg-chat-time {font-size:.68rem;text-align:right;color:#9A8AA0;margin-top:4px}
-.wg-chat-date {text-align:center;margin:16px 0;font-size:.72rem;color:#8A7B90}
+.wg-chat-time {font-size:.68rem;text-align:right;color:var(--wg-muted);margin-top:4px}
+.wg-chat-date {text-align:center;margin:16px 0;font-size:.72rem;color:var(--wg-muted)}
 .wg-chat-date span {background:#fff9;padding:5px 12px;border-radius:8px}
-.wg-chat-empty {text-align:center;color:#8A7B90;padding:110px 12px}
+.wg-chat-empty {text-align:center;color:var(--wg-muted);padding:110px 12px}
 @media (max-width:640px) {.wg-chat-bubble {max-width:94%}}
 </style>
 """

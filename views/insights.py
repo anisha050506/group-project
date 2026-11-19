@@ -6,7 +6,7 @@ import streamlit as st
 from components import charts
 from components.layout import require_login
 from core import database, matching, ml_model
-from core.config import SLIDER_KEYS
+from core.config import BRAND, SLIDER_KEYS
 
 require_login()
 st.title("Insights")
@@ -29,7 +29,7 @@ if not frame.empty:
     points = frame.dropna(subset=["rent_chf", "travel_time_min"])
     figure = go.Figure(go.Scatter(
         x=points.travel_time_min.tolist(), y=points.rent_chf.tolist(), text=points.title.tolist(),
-        mode="markers", marker={"size": 12, "color": "#E85C42"},
+        mode="markers", marker={"size": 12, "color": BRAND["accent"]},
         hovertemplate="%{text}<br>%{x} min · CHF %{y}<extra></extra>",
     ))
     figure.update_layout(xaxis_title="Minutes to HSG", yaxis_title="Monthly rent (CHF)")

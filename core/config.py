@@ -110,3 +110,28 @@ SMOKING_OPTIONS = ["No", "Balcony only", "Yes"]
 # =============================================================================
 MAX_RENT_CHF = 2000          # highest value on the "max rent" input
 MAX_TRAVEL_TIME_MIN = 60     # highest value on the "max travel time" slider
+
+
+# =============================================================================
+#  5  BRAND COLOURS  (change the whole app's look from here)
+# -----------------------------------------------------------------------------
+# The Streamlit theme — page background, buttons, sliders, text — lives in
+# ".streamlit/config.toml". These values colour the parts that theme cannot
+# reach: the Plotly charts and the chat bubbles. To restyle the app:
+#   1. edit the hex values below, and
+#   2. keep "accent" in sync with primaryColor in .streamlit/config.toml
+#      (and, if you change them, background/text too).
+# =============================================================================
+BRAND = {
+    "accent":      "#C85475",  # primary accent (charts, gauge bar) = primaryColor
+    "accent_dark": "#A83E5E",  # darker accent for text on light surfaces
+    "accent_soft": "#F8DCE4",  # soft accent fill (your own chat bubble)
+    "accent_tint": "#F4DBE2",  # very light accent (chat avatar background)
+    "secondary":   "#6E5296",  # second chart series (plum)
+    "ink":         "#2E2140",  # deep plum text  = textColor
+    "muted":       "#8A7B90",  # muted grey for captions and timestamps
+    "chat_bg":     "#F5E9E6",  # chat history panel background
+    "gauge_low":   "#F6E1D9",  # compatibility gauge: 0–40 band
+    "gauge_mid":   "#F1E6D5",  # compatibility gauge: 40–70 band
+    "gauge_high":  "#E7DFEB",  # compatibility gauge: 70–100 band
+}
