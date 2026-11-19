@@ -39,6 +39,24 @@ st.set_page_config(page_title=APP_NAME, page_icon="🏠", layout="wide")
 # --- 2. Create database file + tables if they don't exist yet ---------------
 init_db()
 
+
+# On a fresh/empty database (e.g. a new Streamlit Community Cloud container,
+# whose disk is wiped on each reboot) fill in the demo users and WGs once, so
+# the deployed app is never an empty, un-loginable site. Runs once per container
+# thanks to cache_resource; skipped the moment any user already exists.
+@st.cache_resource
+def _ensure_demo_data() -> bool:
+    with database.get_connection() as conn:
+        already_has_data = conn.execute("SELECT 1 FROM users LIMIT 1").fetchone() is not None
+    if not already_has_data:
+        from data.seed_data import main as seed_demo_data
+
+        seed_demo_data()
+    return True
+
+
+_ensure_demo_data()
+
 # --- 3. Session state = the app's short-term memory while a user is online ---
 #     user_id   -> id of the logged-in user (None = nobody logged in)
 #     role      -> "search_wg" (looking for a room) or "offer_wg" (has a room)
