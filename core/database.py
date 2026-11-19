@@ -424,6 +424,26 @@ def save_swipe(seeker_id: int, wg_id: int, swiped_by: str, liked: bool) -> bool:
     return False
 
 
+def undo_last_swipe(seeker_id: int, wg_id: int, swiped_by: str) -> None:
+    """Take back a just-made like/pass so a misclick is not permanent. If that
+    like had created a match that is still open with no messages yet, remove the
+    match too, so the candidate reappears in the ranking."""
+    with closing(get_connection()) as conn, conn:
+        conn.execute(
+            "DELETE FROM swipes WHERE seeker_id = ? AND wg_id = ? AND swiped_by = ?",
+            (seeker_id, wg_id, swiped_by),
+        )
+        match = conn.execute(
+            "SELECT match_id, status FROM matches WHERE seeker_id = ? AND wg_id = ?",
+            (seeker_id, wg_id),
+        ).fetchone()
+        if match and match["status"] == "open" and not conn.execute(
+            "SELECT 1 FROM messages WHERE match_id = ? LIMIT 1", (match["match_id"],)
+        ).fetchone():
+            conn.execute("DELETE FROM conversation_reads WHERE match_id = ?", (match["match_id"],))
+            conn.execute("DELETE FROM matches WHERE match_id = ?", (match["match_id"],))
+
+
 def get_swiped_wg_ids(seeker_id: int) -> list[int]:
     """Return only WGs swiped by the seeker, excluding provider-only swipes."""
     with closing(get_connection()) as conn:

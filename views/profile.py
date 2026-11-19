@@ -5,6 +5,7 @@ from pathlib import Path
 import streamlit as st
 from components.forms import option_index, number_value
 from components.layout import require_login
+from components.onboarding import getting_started
 from core import database
 from core.uploads import save_photo
 from core.config import DEGREES, GENDERS, LANGUAGES, ROLES, SLIDER_MAX, SLIDER_MIN, SLIDERS, STUDY_LEVELS
@@ -13,6 +14,7 @@ require_login()
 st.title("My profile")
 user_id = st.session_state.user_id
 user = database.get_user_by_id(user_id)
+getting_started(user)
 if user.get("photo_path") and Path(user["photo_path"]).is_file():
     st.image(user["photo_path"], width=180)
 with st.form(f"profile_form_{user_id}"):
@@ -28,10 +30,13 @@ with st.form(f"profile_form_{user_id}"):
     upload = st.file_uploader("Profile photo (up to 5 MB)", type=["jpg", "jpeg", "png", "webp"])
     remove_photo = st.checkbox("Remove current photo") if user.get("photo_path") else False
     st.subheader("How I live")
-    st.caption("Answer all eight questions to start matching.")
+    st.caption("Be honest — these eight answers are what we match you on. Drag each slider between the two extremes.")
     for key, info in SLIDERS.items():
-        data[key] = st.slider(info["label"], SLIDER_MIN, SLIDER_MAX, value=int(number_value(user, key, 5)))
-        st.caption(f"{SLIDER_MIN} = {info['low']} · {SLIDER_MAX} = {info['high']}")
+        data[key] = st.slider(
+            info["label"], SLIDER_MIN, SLIDER_MAX, value=int(number_value(user, key, 5)),
+            help=f"{SLIDER_MIN} = {info['low']}  ·  {SLIDER_MAX} = {info['high']}",
+        )
+        st.caption(f"⟵ {info['low']}　　{info['high']} ⟶")
     submitted = st.form_submit_button("Save profile", type="primary")
 if submitted:
     try:

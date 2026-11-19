@@ -6,6 +6,8 @@ from components.layout import require_login
 from core import database, matching
 
 require_login()
+if st.session_state.pop("_celebrate_match", False):
+    st.balloons()
 is_seeker = st.session_state.role == "search_wg"
 user_id = st.session_state.user_id
 user = database.get_user_by_id(user_id)
@@ -63,13 +65,24 @@ with right:
     else:
         st.caption("Ranking uses the weighted average of your eight lifestyle differences. Train the model in Insights once enough feedback exists.")
 pass_col, like_col = st.columns(2)
-passed = pass_col.button("Pass", width="stretch")
-liked = like_col.button("Like", type="primary", width="stretch")
+passed = pass_col.button("Pass", icon=":material/close:", width="stretch")
+liked = like_col.button("Like", type="primary", icon=":material/favorite:", width="stretch")
+# Let a misclick be taken back: the previous swipe (and any still-open match it
+# created) is removed, and that candidate returns to the ranking.
+if st.session_state.get("_last_swipe"):
+    if st.button("Undo last swipe", icon=":material/undo:"):
+        database.undo_last_swipe(**st.session_state.pop("_last_swipe"))
+        st.session_state["_notice"] = "Last swipe undone."
+        st.rerun()
 if passed or liked:
     seeker_id = user_id if is_seeker else candidate["user_id"]
     wg_id = candidate["wg_id"] if is_seeker else wg["wg_id"]
+    swiped_by = "seeker" if is_seeker else "wg"
     try:
-        new_match = database.save_swipe(seeker_id, wg_id, "seeker" if is_seeker else "wg", liked)
+        new_match = database.save_swipe(seeker_id, wg_id, swiped_by, liked)
+        st.session_state["_last_swipe"] = {"seeker_id": seeker_id, "wg_id": wg_id, "swiped_by": swiped_by}
+        if new_match:
+            st.session_state["_celebrate_match"] = True
         st.session_state["_notice"] = "It's a match! Open Matches & chat to say hello." if new_match else ("Like saved." if liked else "Passed.")
         st.rerun()
     except ValueError as exc:

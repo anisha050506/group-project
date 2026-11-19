@@ -212,6 +212,20 @@ class WorkflowTests(FeatureFixture):
         outsider = database.create_user("nobody@student.unisg.ch", "hash", "search_wg", "Nobody")
         self.assertEqual(database.get_notification_counts(outsider)["total"], 0)
 
+    def test_undo_last_swipe_removes_like_and_open_match_but_keeps_chatted_ones(self):
+        database.save_swipe(self.seeker, self.wg, "seeker", True)
+        database.undo_last_swipe(self.seeker, self.wg, "seeker")
+        self.assertEqual(database.get_swiped_wg_ids(self.seeker), [])
+        # Undoing the like that made a match removes that still-open match.
+        match_id = self.new_match()
+        database.undo_last_swipe(self.seeker, self.wg, "wg")
+        self.assertEqual(database.get_matches_for_user(self.seeker), [])
+        # A match with messages is preserved even if a swipe is undone.
+        match_id = self.new_match()
+        database.send_message(match_id, self.owner, "Hi")
+        database.undo_last_swipe(self.seeker, self.wg, "wg")
+        self.assertEqual(len(database.get_matches_for_user(self.seeker)), 1)
+
     def test_conversations_sort_by_latest_activity_and_show_preview(self):
         first_match = self.new_match()
         other = database.create_user("bea@student.unisg.ch", "hash", "search_wg", "Bea")

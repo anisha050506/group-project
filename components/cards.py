@@ -27,7 +27,7 @@ def wg_card(wg: dict, score: float | None = None, mismatches: list[str] | None =
         rent.metric("Rent / month", f"CHF {wg['rent_chf']:,.0f}" if wg.get("rent_chf") is not None else "Unknown")
         size.metric("Room", f"{wg['room_size_m2']:g} m²" if wg.get("room_size_m2") is not None else "Unknown")
         travel.metric("To HSG", f"{wg['travel_time_min']} min" if wg.get("travel_time_min") is not None else "Unknown")
-        st.caption("Address verification: simulated" if wg.get("is_verified") else "Address verification pending")
+        st.caption(":green[:material/verified: Verified address] (simulated)" if wg.get("is_verified") else ":orange[:material/schedule: Address verification pending]")
         _score(score, mismatches)
         if wg.get("description"):
             st.write(wg["description"])
@@ -53,4 +53,4 @@ def seeker_card(seeker: dict, score: float | None = None, mismatches: list[str] 
         _score(score, mismatches)
         if seeker.get("bio"):
             st.write(seeker["bio"])
-        st.caption("Student verification: simulated" if seeker.get("is_verified") else "Student verification pending")
+        st.caption(":green[:material/verified: Verified HSG student] (simulated)" if seeker.get("is_verified") else ":orange[:material/schedule: Student verification pending]")
