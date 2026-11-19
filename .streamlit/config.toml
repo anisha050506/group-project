@@ -1,7 +1,8 @@
 # Look of the app. Colours can be changed at any time.
+# Warm palette: a friendly orange accent on a soft cream background.
 [theme]
-primaryColor = "#2E7D6B"              # buttons, sliders, links
-backgroundColor = "#FFFFFF"           # page background
-secondaryBackgroundColor = "#F3F6F5"  # sidebar, input fields
-textColor = "#1F2A2E"
+primaryColor = "#E67A2E"              # buttons, sliders, links (warm orange)
+backgroundColor = "#FDF6EE"           # page background (warm cream)
+secondaryBackgroundColor = "#F8E8D6"  # sidebar, input fields (warm sand)
+textColor = "#3B2E27"                 # warm dark brown
 font = "sans serif"
