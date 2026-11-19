@@ -45,7 +45,54 @@ streamlit run app.py
 
 All required libraries are listed in `requirements.txt`.
 
-**Test accounts** (created by the seed script, password `demo1234`): `ana.demo@student.unisg.ch` (seeker), `jonas.demo@student.unisg.ch` (WG provider). Until login is coded, use the **Developer shortcut** on the login page.
+To try a small in-memory database with SQL inserts for all eight tables, run
+`python -m data.database_example`. It uses `sqlite3`, `pandas`, and
+`DB.executescript(...)` and leaves the saved app database untouched.
+
+**Test accounts** (created by the seed script, password `demo1234`): `ana.demo@student.unisg.ch` (seeker), `jonas.demo@student.unisg.ch` (WG provider). Register a new account to try profile setup from the beginning.
+
+Registration, login, saved profiles and photos, search criteria, listing edits,
+WG member management, ranked swiping, chat, viewings, room offers, acceptance,
+feedback, and Insights are implemented. Only the main tenant edits a listing
+or offers its room. Accepting an offer hides the listing and closes competing
+matches in the same transaction. Log out to test the other side of a match.
+
+Student and address verification are **simulated for this course demo**. No
+verification email is sent. Address verification is an explicit simulation
+checkbox on the listing form. Transport times and map coordinates use the
+[Swiss Transport API](https://transport.opendata.ch/docs.html); failed lookups
+stay unknown and can be refreshed from the listing form.
+
+The model is a random forest trained on the normalized absolute differences
+between the eight seeker and WG lifestyle sliders. Evaluation holds out whole
+seekers, reports accuracy against a majority baseline, balanced accuracy, ROC
+AUC, and Brier score, then refits on all feedback. Seed feedback is synthetic;
+demo metrics do not establish performance on real tenants. When a trained
+model is available, ranking combines 80% lifestyle similarity and 20% model
+probability. With insufficient training data, ranking uses lifestyle alone.
+
+Train or refresh the model in **Insights**, or run:
+
+```bash
+python -m core.ml_model
+```
+
+Run the automated service and Streamlit page tests from the repository root:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+Tests use temporary databases, models, and uploads. They cover registration
+through profile setup, role switching, saved listing edits, mutual swipes,
+chat, offers, acceptance, feedback, and model training. Transport responses
+and failures are mocked so the suite works offline.
+
+Database and model paths resolve relative to the project, regardless of the
+working directory. For an isolated copy, set `WG_MATCH_DB_PATH` and
+`WG_MATCH_MODEL_PATH` before starting Python. Photos are validated, resized,
+and stored in `assets/uploads/`, which is excluded from Git. The seed command
+resets the selected database; run it only when you intend to replace its data.
 
 ## 3. Folder structure
 
@@ -56,7 +103,7 @@ group-project/
 │   └── config.toml    look of the app (colours, font)
 ├── app.py             ENTRY POINT – start with: streamlit run app.py (routing)
 ├── views/             one file per page (what the user sees)
-│   ├── login.py             log in (+ temporary developer shortcut)
+│   ├── login.py             log in with an HSG account
 │   ├── register.py          create account with HSG email, choose role
 │   ├── profile.py           personal profile, 8 lifestyle sliders, role switch
 │   ├── search_criteria.py   seekers: max rent, move-in date, travel time …
@@ -69,19 +116,23 @@ group-project/
 │   ├── database.py    SQLite tables + all read/write functions
 │   ├── auth.py        registration, login, password hashing
 │   ├── matching.py    hard filters, compatibility score, ranking
-│   ├── ml_model.py    our own ML model (approach to be defined)
-│   └── transport_api.py   travel time to HSG (transport.opendata.ch)
+│   ├── ml_model.py    random forest training, evaluation, and prediction
+│   ├── transport_api.py   travel time to HSG (transport.opendata.ch)
+│   └── uploads.py     validation and resizing for uploaded photos
 ├── components/        reusable page pieces
-│   ├── layout.py      login check, sidebar with logout, "under construction" box
+│   ├── layout.py      login checks, session handling, sidebar and logout
+│   ├── forms.py       saved defaults for editable forms
 │   ├── cards.py       WG card / seeker card
 │   └── charts.py      radar chart, score gauge, rent per district, map
 ├── data/
+│   ├── database_example.py  small in-memory SQLite example for all eight tables
 │   ├── seed_data.py   creates fake users, WGs, swipes and feedback
 │   └── wg_match.db    the database (created automatically, not on GitHub)
 ├── docs/
 │   ├── database_schema.md      overview of all database tables
 │   ├── contribution_matrix.md  who did what (shown in the video)
 │   └── ai_usage.md             AI use log + citation rules (shown in the video)
+├── tests/             isolated service and Streamlit integration tests
 ├── README.md          project description and instructions (this file, not part of the app)
 └── requirements.txt   all libraries needed to run the app
 ```

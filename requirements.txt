@@ -4,9 +4,10 @@
 streamlit>=1.50      # web app framework (pages, forms, sliders)
 pandas>=2.0          # tables / DataFrames
 numpy>=1.26          # numerical calculations
-plotly>=5.20         # interactive charts (radar chart, map, bar charts)
+plotly>=5.24         # interactive charts (radar chart, map, bar charts)
 scikit-learn>=1.4    # machine learning model
 requests>=2.31       # calling the transport.opendata.ch API
+pillow>=10.4         # validate and resize uploaded photos
 
 # Built into Python, no install needed:
 # sqlite3 (database), random (seed data), datetime, hashlib (passwords)

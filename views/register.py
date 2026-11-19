@@ -1,45 +1,25 @@
-"""
-===============================================================================
-FILE:     views/register.py       (page: "Register")
-OWNER:    Person A – Routing & Accounts
--------------------------------------------------------------------------------
-PURPOSE
-    Create an account: HSG email, password, first name and role
-    ("I look for a WG" / "I offer a WG"). The rest of the profile is filled
-    in afterwards on "My profile".
-
-TO DO
-    [ ] call auth.register_user(...) on submit and show its message
-    [ ] on success: log the user in directly (auth.login_user + log_in_session)
-    [ ] after login, send the user to "My profile" (st.switch_page)
-
-USES:     core/auth.py, core/config.py (ROLES), components/layout.py
-AI NOTE:  Generated with Claude (Anthropic), 15.11.2026 – see docs/ai_usage.md
-===============================================================================
-"""
-
+"""Create a student account and continue to profile setup."""
+# AI-generated: OpenAI Codex, 19.11.2026. Prompt: code everything missing.
 import streamlit as st
-
-from core import auth
+from components.layout import log_in_session
+from core.auth import login_user, register_user
 from core.config import ROLES
 
 st.title("Create your account")
-st.caption("Only verified HSG students can join (@student.unisg.ch).")
-
+st.caption("Use your @student.unisg.ch email. Student verification is simulated in this course demo.")
 with st.form("register_form"):
-    name = st.text_input("First name")
+    name = st.text_input("First name", max_chars=80)
     email = st.text_input("HSG email", placeholder="firstname.lastname@student.unisg.ch")
     col1, col2 = st.columns(2)
     password = col1.text_input("Password", type="password")
     password_repeat = col2.text_input("Repeat password", type="password")
     role = st.radio("What do you want to do?", options=list(ROLES), format_func=ROLES.get, horizontal=True)
     submitted = st.form_submit_button("Create account", type="primary")
-
 if submitted:
-    try:
-        success, message = auth.register_user(email, password, password_repeat, name, role)
-        (st.success if success else st.error)(message)
-    except NotImplementedError:
-        st.info("Registration is not coded yet (core/auth.py → register_user).")
-
+    success, message = register_user(email, password, password_repeat, name, role)
+    if success:
+        user = login_user(email, password)
+        log_in_session(user, next_page="views/profile.py")
+    else:
+        st.error(message)
 st.page_link("views/login.py", label="Already registered? Log in", icon=":material/login:")

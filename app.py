@@ -29,6 +29,7 @@ AI NOTE:  Generated with Claude (Anthropic), 15.11.2026 – see docs/ai_usage.md
 import streamlit as st
 
 from components.layout import sidebar_user_box
+from core import database
 from core.config import APP_NAME
 from core.database import init_db
 
@@ -46,6 +47,17 @@ init_db()
 SESSION_DEFAULTS = {"user_id": None, "role": None, "user_name": None, "wg_id": None}
 for key, value in SESSION_DEFAULTS.items():
     st.session_state.setdefault(key, value)
+
+# AI-generated: OpenAI Codex, 19.11.2026. Keep account state in sync on reruns.
+if st.session_state.user_id is not None:
+    account = database.get_user_by_id(st.session_state.user_id)
+    if account is None:
+        for key in list(st.session_state):
+            del st.session_state[key]
+        st.session_state.update(SESSION_DEFAULTS)
+    else:
+        st.session_state.role = account["role"]
+        st.session_state.user_name = account.get("name") or account["email"]
 
 # --- 4. Define every page once (file path, menu title, icon) -----------------
 login_page = st.Page("views/login.py", title="Log in", icon=":material/login:")
@@ -80,4 +92,8 @@ if st.session_state.user_id is not None:
     sidebar_user_box()
 
 # --- 6. Run the page the user selected ---------------------------------------
+# AI-generated: OpenAI Codex, 19.11.2026. Navigate after authentication/role changes.
+destination = st.session_state.pop("_next_page", None)
+if destination:
+    st.switch_page(destination)
 navigation.run()

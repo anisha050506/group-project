@@ -26,14 +26,17 @@ TABLES (details: docs/database_schema.md)
     messages         chat messages inside a match
     feedback         "was the match good?" -> training data for the ML model
 
-STATUS:   Step 3 – tables + connection work. Functions marked TODO must be coded.
-          get_user_by_id() is a finished EXAMPLE: copy its pattern.
+STATUS:   Tables and read/write functions implemented.
 AI NOTE:  Generated with Claude (Anthropic), 15.11.2026 – see docs/ai_usage.md
+          Database functions completed with OpenAI Codex, 19.11.2026.
 ===============================================================================
 """
 
 import os
 import sqlite3
+from contextlib import closing
+
+import pandas as pd
 
 from core.config import DB_PATH, SLIDER_KEYS
 
@@ -153,7 +156,7 @@ CREATE TABLE IF NOT EXISTS feedback (
 # =============================================================================
 def get_connection() -> sqlite3.Connection:
     """Open the database. Rows behave like dicts: row["name"]."""
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
@@ -162,7 +165,7 @@ def get_connection() -> sqlite3.Connection:
 
 def init_db() -> None:
     """Create all tables if they don't exist. Safe to call on every app run."""
-    with get_connection() as conn:
+    with closing(get_connection()) as conn, conn:
         conn.executescript(SCHEMA)
 
 
@@ -174,163 +177,445 @@ def reset_db() -> None:
 
 
 # =============================================================================
-# Users   (get_user_by_id = finished example, rest TODO)
+# Users
 # =============================================================================
 def get_user_by_id(user_id: int) -> dict | None:
-    """EXAMPLE: return one user as a dict, or None if not found."""
-    with get_connection() as conn:
+    """Return one user as a dict, or None if not found."""
+    with closing(get_connection()) as conn:
         row = conn.execute("SELECT * FROM users WHERE user_id = ?", (user_id,)).fetchone()
     return dict(row) if row else None
 
 
 def get_user_by_email(email: str) -> dict | None:
-    """TODO: same as get_user_by_id, but search by email (used for login)."""
-    raise NotImplementedError("TODO (Person B): get_user_by_email")
+    """Find an account by its normalized email address."""
+    with closing(get_connection()) as conn:
+        row = conn.execute("SELECT * FROM users WHERE email = ?", (email.strip().lower(),)).fetchone()
+    return dict(row) if row else None
 
 
 def create_user(email: str, password_hash: str, role: str, name: str) -> int:
-    """TODO: INSERT a new user and return the new user_id (cursor.lastrowid)."""
-    raise NotImplementedError("TODO (Person B): create_user")
+    """Insert an account and return its new user_id."""
+    with closing(get_connection()) as conn, conn:
+        cursor = conn.execute(
+            "INSERT INTO users (email, password_hash, role, name) VALUES (?, ?, ?, ?)",
+            (email.strip().lower(), password_hash, role, name),
+        )
+        return cursor.lastrowid
+
+
+# AI-generated: OpenAI Codex, 19.11.2026. Prompt: implement the SQLite database
+# for all project forms, following the supplied sqlite3 / pandas example.
+_PROFILE_FIELDS = {
+    "name", "birth_year", "gender", "languages", "degree", "study_level", "bio",
+    "photo_path", "is_verified", *SLIDER_KEYS,
+}
+_CRITERIA_FIELDS = {
+    "max_rent", "move_in_date", "max_travel_time", "preferred_flatmate_gender", "smoker",
+}
+_WG_FIELDS = {
+    "title", "address", "district", "postcode", "latitude", "longitude", "rent_chf",
+    "utilities_chf", "deposit_chf", "room_size_m2", "flat_size_m2", "num_rooms",
+    "num_flatmates", "furnished", "private_bathroom", "balcony", "amenities",
+    "available_from", "available_until", "min_rental_months", "wg_type",
+    "smoking_allowed", "pets_allowed", "preferred_gender", "travel_time_min",
+    "description", "photo_path", "is_verified", "is_active",
+}
+
+
+def _validate_fields(data: dict, allowed: set[str]) -> None:
+    """Only allow known column names in dynamically built SQL."""
+    unknown = set(data) - allowed
+    if unknown:
+        raise ValueError(f"Unknown database fields: {', '.join(sorted(unknown))}")
+
+
+def _update_row(table: str, id_column: str, row_id: int, data: dict, allowed: set[str]) -> None:
+    """Update allowed fields. Table and id column are internal constants."""
+    _validate_fields(data, allowed)
+    if not data:
+        return
+    assignments = ", ".join(f"{column} = ?" for column in data)
+    with closing(get_connection()) as conn, conn:
+        conn.execute(
+            f"UPDATE {table} SET {assignments} WHERE {id_column} = ?",
+            [*data.values(), row_id],
+        )
 
 
 def update_profile(user_id: int, data: dict) -> None:
-    """
-    TODO: UPDATE the users row with the values in `data`.
-    `data` keys = column names, e.g. {"name": "Ana", "tidiness": 7, ...}
-    Tip: build "SET name = ?, tidiness = ?" from data.keys() – but only allow
-    known column names (never put user text directly into SQL!).
-    """
-    raise NotImplementedError("TODO (Person B): update_profile")
+    """Save profile fields and lifestyle sliders; None is stored as SQL NULL."""
+    _update_row("users", "user_id", user_id, data, _PROFILE_FIELDS)
 
 
 def update_role(user_id: int, role: str) -> None:
-    """TODO: change role ('search_wg' <-> 'offer_wg'), used by the role switch."""
-    raise NotImplementedError("TODO (Person B): update_role")
+    """Switch between seeker and WG provider."""
+    _update_row("users", "user_id", user_id, {"role": role}, {"role"})
 
 
 def get_all_seekers() -> list[dict]:
-    """TODO: all users with role 'search_wg' (+ their search_criteria, via JOIN)."""
-    raise NotImplementedError("TODO (Person B): get_all_seekers")
+    """Return seekers, including those who have not entered criteria yet."""
+    with closing(get_connection()) as conn:
+        rows = conn.execute(
+            "SELECT u.*, c.max_rent, c.move_in_date, c.max_travel_time, "
+            "c.preferred_flatmate_gender, c.smoker "
+            "FROM users u LEFT JOIN search_criteria c ON c.user_id = u.user_id "
+            "WHERE u.role = 'search_wg' ORDER BY u.user_id"
+        ).fetchall()
+    return [dict(row) for row in rows]
 
 
 # =============================================================================
-# Search criteria (seekers)   TODO
+# Search criteria (seekers)
 # =============================================================================
 def save_search_criteria(user_id: int, data: dict) -> None:
-    """TODO: INSERT OR REPLACE the row in search_criteria for this user."""
-    raise NotImplementedError("TODO (Person B): save_search_criteria")
+    """Insert criteria or update supplied fields without clearing other fields."""
+    _validate_fields(data, _CRITERIA_FIELDS)
+    columns = ["user_id", *data]
+    placeholders = ", ".join("?" for _ in columns)
+    assignments = ", ".join(f"{column} = excluded.{column}" for column in data)
+    conflict = f"DO UPDATE SET {assignments}" if data else "DO NOTHING"
+    with closing(get_connection()) as conn, conn:
+        conn.execute(
+            f"INSERT INTO search_criteria ({', '.join(columns)}) VALUES ({placeholders}) "
+            f"ON CONFLICT(user_id) {conflict}",
+            [user_id, *data.values()],
+        )
 
 
 def get_search_criteria(user_id: int) -> dict | None:
-    """TODO: return the seeker's criteria as a dict, or None."""
-    raise NotImplementedError("TODO (Person B): get_search_criteria")
+    """Return the seeker's criteria, or None."""
+    with closing(get_connection()) as conn:
+        row = conn.execute("SELECT * FROM search_criteria WHERE user_id = ?", (user_id,)).fetchone()
+    return dict(row) if row else None
 
 
 # =============================================================================
-# WGs   TODO
+# WGs
 # =============================================================================
 def create_wg(data: dict, owner_user_id: int) -> int:
-    """
-    TODO: INSERT a WG, then add the owner to wg_members with is_main_tenant=1.
-    Return the new wg_id.
-    """
-    raise NotImplementedError("TODO (Person B): create_wg")
+    """Create a WG and its main tenant in one transaction; return the wg_id."""
+    _validate_fields(data, _WG_FIELDS)
+    with closing(get_connection()) as conn, conn:
+        if data:
+            columns = ", ".join(data)
+            placeholders = ", ".join("?" for _ in data)
+            cursor = conn.execute(
+                f"INSERT INTO wgs ({columns}) VALUES ({placeholders})", list(data.values())
+            )
+        else:
+            cursor = conn.execute("INSERT INTO wgs DEFAULT VALUES")
+        wg_id = cursor.lastrowid
+        conn.execute(
+            "INSERT INTO wg_members (wg_id, user_id, is_main_tenant) VALUES (?, ?, 1)",
+            (wg_id, owner_user_id),
+        )
+    return wg_id
 
 
 def update_wg(wg_id: int, data: dict) -> None:
-    """TODO: UPDATE the WG row (same idea as update_profile)."""
-    raise NotImplementedError("TODO (Person B): update_wg")
+    """Save supplied WG listing fields."""
+    _update_row("wgs", "wg_id", wg_id, data, _WG_FIELDS)
 
 
 def get_wg(wg_id: int) -> dict | None:
-    """TODO: return one WG as a dict."""
-    raise NotImplementedError("TODO (Person B): get_wg")
+    """Return one WG, or None."""
+    with closing(get_connection()) as conn:
+        row = conn.execute("SELECT * FROM wgs WHERE wg_id = ?", (wg_id,)).fetchone()
+    return dict(row) if row else None
 
 
 def get_wg_for_user(user_id: int) -> dict | None:
-    """TODO: the WG this user lives in (via wg_members), or None."""
-    raise NotImplementedError("TODO (Person B): get_wg_for_user")
+    """Return a user's WG, preferring one where they are the main tenant."""
+    with closing(get_connection()) as conn:
+        row = conn.execute(
+            "SELECT w.* FROM wgs w JOIN wg_members m ON m.wg_id = w.wg_id "
+            "WHERE m.user_id = ? ORDER BY m.is_main_tenant DESC, w.wg_id LIMIT 1",
+            (user_id,),
+        ).fetchone()
+    return dict(row) if row else None
 
 
 def get_all_active_wgs() -> list[dict]:
-    """TODO: all WGs with is_active = 1 AND is_verified = 1."""
-    raise NotImplementedError("TODO (Person B): get_all_active_wgs")
+    """Return active, verified listings."""
+    with closing(get_connection()) as conn:
+        rows = conn.execute(
+            "SELECT * FROM wgs WHERE is_active = 1 AND is_verified = 1 ORDER BY wg_id"
+        ).fetchall()
+    return [dict(row) for row in rows]
 
 
 def add_wg_member(wg_id: int, user_id: int, is_main_tenant: bool = False) -> None:
-    """TODO: INSERT into wg_members."""
-    raise NotImplementedError("TODO (Person B): add_wg_member")
+    """Add a member, or update their main-tenant flag if already present."""
+    with closing(get_connection()) as conn, conn:
+        conn.execute(
+            "INSERT INTO wg_members (wg_id, user_id, is_main_tenant) VALUES (?, ?, ?) "
+            "ON CONFLICT(wg_id, user_id) DO UPDATE SET is_main_tenant = excluded.is_main_tenant",
+            (wg_id, user_id, int(is_main_tenant)),
+        )
 
 
 def get_wg_members(wg_id: int) -> list[dict]:
-    """TODO: all users living in this WG (JOIN wg_members + users)."""
-    raise NotImplementedError("TODO (Person B): get_wg_members")
+    """Return members and their main-tenant flags."""
+    with closing(get_connection()) as conn:
+        rows = conn.execute(
+            "SELECT u.*, m.is_main_tenant FROM users u "
+            "JOIN wg_members m ON m.user_id = u.user_id WHERE m.wg_id = ? "
+            "ORDER BY m.is_main_tenant DESC, u.user_id", (wg_id,),
+        ).fetchall()
+    return [dict(row) for row in rows]
 
 
 def get_wg_lifestyle_profile(wg_id: int) -> dict:
-    """
-    TODO: average slider values of all WG members -> {"tidiness": 6.5, ...}
-    This is how a WG gets a "personality" to compare with seekers.
-    Tip: SELECT AVG(tidiness) AS tidiness, AVG(...) ... FROM users JOIN wg_members ...
-    """
-    raise NotImplementedError("TODO (Person B): get_wg_lifestyle_profile")
+    """Average each slider, ignoring NULLs; an unfilled slider stays None."""
+    averages = ", ".join(f"AVG(u.{key}) AS {key}" for key in SLIDER_KEYS)
+    with closing(get_connection()) as conn:
+        row = conn.execute(
+            f"SELECT {averages} FROM users u JOIN wg_members m ON m.user_id = u.user_id "
+            "WHERE m.wg_id = ?", (wg_id,),
+        ).fetchone()
+    return dict(row)
 
 
 # =============================================================================
-# Swipes & matches   TODO
+# Swipes & matches
 # =============================================================================
 def save_swipe(seeker_id: int, wg_id: int, swiped_by: str, liked: bool) -> bool:
-    """
-    TODO: save a like/pass. swiped_by = 'seeker' or 'wg'.
-    After saving a LIKE, check if the other side also liked
-    -> if yes, INSERT into matches and return True ("It's a match!").
-    Otherwise return False.
-    """
-    raise NotImplementedError("TODO (Person B): save_swipe")
+    """Save a like/pass and return True only when a new mutual match is made."""
+    if swiped_by not in {"seeker", "wg"}:
+        raise ValueError("swiped_by must be 'seeker' or 'wg'")
+    with closing(get_connection()) as conn, conn:
+        conn.execute("BEGIN IMMEDIATE")
+        available = conn.execute(
+            "SELECT 1 FROM wgs WHERE wg_id = ? AND is_active = 1 AND is_verified = 1", (wg_id,),
+        ).fetchone()
+        if not available:
+            raise ValueError("This listing is no longer active and verified.")
+        if conn.execute("SELECT 1 FROM wg_members WHERE wg_id = ? AND user_id = ?", (wg_id, seeker_id)).fetchone():
+            raise ValueError("You cannot swipe on your own WG.")
+        if conn.execute("SELECT 1 FROM matches WHERE seeker_id = ? AND status = 'accepted'", (seeker_id,)).fetchone():
+            raise ValueError("This seeker has already accepted a room.")
+        conn.execute(
+            "INSERT INTO swipes (seeker_id, wg_id, swiped_by, liked) VALUES (?, ?, ?, ?) "
+            "ON CONFLICT(seeker_id, wg_id, swiped_by) DO UPDATE SET "
+            "liked = excluded.liked, created_at = CURRENT_TIMESTAMP",
+            (seeker_id, wg_id, swiped_by, int(liked)),
+        )
+        other_side = "wg" if swiped_by == "seeker" else "seeker"
+        reciprocal = conn.execute(
+            "SELECT 1 FROM swipes WHERE seeker_id = ? AND wg_id = ? "
+            "AND swiped_by = ? AND liked = 1", (seeker_id, wg_id, other_side),
+        ).fetchone()
+        if liked and reciprocal:
+            cursor = conn.execute(
+                "INSERT INTO matches (seeker_id, wg_id) VALUES (?, ?) "
+                "ON CONFLICT(seeker_id, wg_id) DO NOTHING", (seeker_id, wg_id),
+            )
+            return cursor.rowcount == 1
+    return False
 
 
 def get_swiped_wg_ids(seeker_id: int) -> list[int]:
-    """TODO: WG ids this seeker already swiped (so we don't show them again)."""
-    raise NotImplementedError("TODO (Person B): get_swiped_wg_ids")
+    """Return only WGs swiped by the seeker, excluding provider-only swipes."""
+    with closing(get_connection()) as conn:
+        rows = conn.execute(
+            "SELECT wg_id FROM swipes WHERE seeker_id = ? AND swiped_by = 'seeker' "
+            "ORDER BY wg_id", (seeker_id,),
+        ).fetchall()
+    return [row["wg_id"] for row in rows]
 
 
 def get_seekers_who_liked_wg(wg_id: int) -> list[dict]:
-    """TODO: seekers who liked this WG and the WG hasn't answered yet."""
-    raise NotImplementedError("TODO (Person B): get_seekers_who_liked_wg")
+    """Return seekers who liked the WG and have no provider response yet."""
+    with closing(get_connection()) as conn:
+        rows = conn.execute(
+            "SELECT u.* FROM users u JOIN swipes s ON s.seeker_id = u.user_id "
+            "WHERE u.role = 'search_wg' AND s.wg_id = ? AND s.swiped_by = 'seeker' "
+            "AND s.liked = 1 AND NOT EXISTS (SELECT 1 FROM swipes response "
+            "WHERE response.seeker_id = s.seeker_id AND response.wg_id = s.wg_id "
+            "AND response.swiped_by = 'wg') ORDER BY s.created_at, s.swipe_id", (wg_id,),
+        ).fetchall()
+    return [dict(row) for row in rows]
 
 
 def get_matches_for_user(user_id: int) -> list[dict]:
-    """TODO: all matches where the user is the seeker OR a member of the WG."""
-    raise NotImplementedError("TODO (Person B): get_matches_for_user")
+    """Return matches visible to the seeker or any member, with display names."""
+    with closing(get_connection()) as conn:
+        rows = conn.execute(
+            "SELECT m.*, u.name AS seeker_name, w.title AS wg_title FROM matches m "
+            "JOIN users u ON u.user_id = m.seeker_id JOIN wgs w ON w.wg_id = m.wg_id "
+            "WHERE m.seeker_id = ? OR EXISTS (SELECT 1 FROM wg_members member "
+            "WHERE member.wg_id = m.wg_id AND member.user_id = ?) "
+            "ORDER BY m.created_at DESC, m.match_id DESC", (user_id, user_id),
+        ).fetchall()
+    return [dict(row) for row in rows]
 
 
 def update_match(match_id: int, data: dict) -> None:
-    """TODO: e.g. {"viewing_done": 1} or {"status": "offered"}."""
-    raise NotImplementedError("TODO (Person B): update_match")
+    """Update viewing completion or the offer status."""
+    if "status" in data and data["status"] not in {"open", "offered", "accepted", "declined"}:
+        raise ValueError("Unknown match status")
+    _update_row("matches", "match_id", match_id, data, {"viewing_done", "status"})
 
 
 # =============================================================================
-# Messages & feedback   TODO
+# Messages & feedback
 # =============================================================================
 def send_message(match_id: int, sender_id: int, text: str) -> None:
-    """TODO: INSERT a chat message."""
-    raise NotImplementedError("TODO (Person B): send_message")
+    """Insert a message from a seeker or member of the matched WG."""
+    text = text.strip()
+    if not text or len(text) > 4000:
+        raise ValueError("Enter a message of 1–4000 characters.")
+    with closing(get_connection()) as conn, conn:
+        participant = conn.execute(
+            "SELECT 1 FROM matches m WHERE m.match_id = ? AND (m.seeker_id = ? "
+            "OR EXISTS (SELECT 1 FROM wg_members member "
+            "WHERE member.wg_id = m.wg_id AND member.user_id = ?))",
+            (match_id, sender_id, sender_id),
+        ).fetchone()
+        if not participant:
+            raise ValueError("Sender must belong to this match")
+        conn.execute(
+            "INSERT INTO messages (match_id, sender_id, text) VALUES (?, ?, ?)",
+            (match_id, sender_id, text),
+        )
 
 
 def get_messages(match_id: int) -> list[dict]:
-    """TODO: all messages of a match, oldest first."""
-    raise NotImplementedError("TODO (Person B): get_messages")
+    """Return a match's messages, oldest first, including sender names."""
+    with closing(get_connection()) as conn:
+        rows = conn.execute(
+            "SELECT m.*, u.name AS sender_name FROM messages m "
+            "JOIN users u ON u.user_id = m.sender_id WHERE m.match_id = ? "
+            "ORDER BY m.created_at, m.message_id", (match_id,),
+        ).fetchall()
+    return [dict(row) for row in rows]
 
 
 def save_feedback(seeker_id: int, wg_id: int, satisfied: bool, comment: str = "") -> None:
-    """TODO: INSERT into feedback (asked ~3 months after moving in)."""
-    raise NotImplementedError("TODO (Person B): save_feedback")
+    """Record satisfaction feedback for model training."""
+    with closing(get_connection()) as conn, conn:
+        conn.execute(
+            "INSERT INTO feedback (seeker_id, wg_id, satisfied, comment) VALUES (?, ?, ?, ?)",
+            (seeker_id, wg_id, int(satisfied), comment),
+        )
 
 
-def get_training_data():
+def get_training_data() -> pd.DataFrame:
+    """One row per feedback with seeker_<slider>, wg_<slider>, and satisfied.
+
+    WG values are current member averages. Missing sliders stay missing;
+    the model can decide how to handle incomplete profiles.
     """
-    TODO: return a pandas DataFrame for the ML model: one row per feedback,
-    with the seeker's sliders, the WG's average sliders and `satisfied`.
-    Tip: pandas.read_sql_query(sql, conn)
+    averages = ", ".join(f"AVG(u.{key}) AS {key}" for key in SLIDER_KEYS)
+    features = ", ".join(
+        f"seeker.{key} AS seeker_{key}, profile.{key} AS wg_{key}" for key in SLIDER_KEYS
+    )
+    sql = f"""
+        WITH wg_profiles AS (
+            SELECT member.wg_id, {averages}
+            FROM wg_members member JOIN users u ON u.user_id = member.user_id
+            GROUP BY member.wg_id
+        )
+        SELECT f.feedback_id, f.seeker_id, f.wg_id, {features}, f.satisfied
+        FROM feedback f
+        JOIN users seeker ON seeker.user_id = f.seeker_id
+        LEFT JOIN wg_profiles profile ON profile.wg_id = f.wg_id
+        ORDER BY f.feedback_id
     """
-    raise NotImplementedError("TODO (Person B + D): get_training_data")
+    with closing(get_connection()) as conn:
+        return pd.read_sql_query(sql, conn)
+
+
+# AI-generated: OpenAI Codex, 19.11.2026. Complete the match and tenancy workflow.
+def mark_viewing_done(match_id: int, actor_id: int) -> None:
+    """Only a member of the matched WG can confirm a viewing."""
+    with closing(get_connection()) as conn, conn:
+        cursor = conn.execute(
+            "UPDATE matches SET viewing_done = 1 WHERE match_id = ? AND status = 'open' "
+            "AND EXISTS (SELECT 1 FROM wg_members member WHERE member.wg_id = matches.wg_id "
+            "AND member.user_id = ?)", (match_id, actor_id),
+        )
+        if not cursor.rowcount:
+            raise ValueError("Only a WG member can record a viewing for an open match.")
+
+
+def change_match_status(match_id: int, actor_id: int, status: str) -> None:
+    """Enforce offer permissions and reserve a room atomically on acceptance."""
+    with closing(get_connection()) as conn, conn:
+        conn.execute("BEGIN IMMEDIATE")
+        match = conn.execute("SELECT * FROM matches WHERE match_id = ?", (match_id,)).fetchone()
+        if not match:
+            raise ValueError("Match not found.")
+        main_tenant = conn.execute(
+            "SELECT 1 FROM wg_members WHERE wg_id = ? AND user_id = ? AND is_main_tenant = 1",
+            (match["wg_id"], actor_id),
+        ).fetchone()
+        is_seeker = actor_id == match["seeker_id"]
+        if status == "offered":
+            if not main_tenant or match["status"] != "open" or not match["viewing_done"]:
+                raise ValueError("The main tenant can offer the room after a viewing.")
+            available = conn.execute("SELECT is_active FROM wgs WHERE wg_id = ?", (match["wg_id"],)).fetchone()
+            if not available or not available["is_active"]:
+                raise ValueError("This room is no longer available.")
+        elif status == "accepted":
+            if not is_seeker or match["status"] != "offered":
+                raise ValueError("Only the seeker can accept an offered room.")
+            already_housed = conn.execute(
+                "SELECT 1 FROM matches WHERE seeker_id = ? AND status = 'accepted' AND match_id != ?",
+                (actor_id, match_id),
+            ).fetchone()
+            if already_housed:
+                raise ValueError("You have already accepted a room.")
+            cursor = conn.execute("UPDATE wgs SET is_active = 0 WHERE wg_id = ? AND is_active = 1", (match["wg_id"],))
+            if not cursor.rowcount:
+                raise ValueError("This room has already been taken.")
+            conn.execute(
+                "UPDATE matches SET status = 'declined' WHERE match_id != ? AND status IN ('open', 'offered') "
+                "AND (wg_id = ? OR seeker_id = ?)", (match_id, match["wg_id"], actor_id),
+            )
+        elif status == "declined":
+            if not (is_seeker or main_tenant) or match["status"] not in {"open", "offered"}:
+                raise ValueError("Only the seeker or main tenant can decline an open match or offer.")
+        else:
+            raise ValueError("Unknown match transition.")
+        conn.execute("UPDATE matches SET status = ? WHERE match_id = ?", (status, match_id))
+
+
+def save_match_feedback(match_id: int, actor_id: int, satisfied: bool, comment: str = "") -> None:
+    """One feedback submission per accepted match, by its seeker."""
+    with closing(get_connection()) as conn, conn:
+        conn.execute("BEGIN IMMEDIATE")
+        match = conn.execute(
+            "SELECT * FROM matches WHERE match_id = ? AND seeker_id = ? AND status = 'accepted'",
+            (match_id, actor_id),
+        ).fetchone()
+        if not match:
+            raise ValueError("Only the seeker in an accepted match can leave feedback.")
+        exists = conn.execute(
+            "SELECT 1 FROM feedback WHERE seeker_id = ? AND wg_id = ?", (actor_id, match["wg_id"]),
+        ).fetchone()
+        if exists:
+            raise ValueError("Feedback has already been recorded for this match.")
+        conn.execute(
+            "INSERT INTO feedback (seeker_id, wg_id, satisfied, comment) VALUES (?, ?, ?, ?)",
+            (actor_id, match["wg_id"], int(satisfied), comment.strip()),
+        )
+
+
+def has_match_feedback(seeker_id: int, wg_id: int) -> bool:
+    with closing(get_connection()) as conn:
+        return conn.execute(
+            "SELECT 1 FROM feedback WHERE seeker_id = ? AND wg_id = ?", (seeker_id, wg_id),
+        ).fetchone() is not None
+
+
+def remove_wg_member(wg_id: int, user_id: int, actor_id: int) -> None:
+    """The main tenant can remove another member, but cannot remove themselves."""
+    with closing(get_connection()) as conn, conn:
+        main_tenant = conn.execute(
+            "SELECT 1 FROM wg_members WHERE wg_id = ? AND user_id = ? AND is_main_tenant = 1",
+            (wg_id, actor_id),
+        ).fetchone()
+        if not main_tenant or user_id == actor_id:
+            raise ValueError("Only the main tenant can remove another flatmate.")
+        conn.execute("DELETE FROM wg_members WHERE wg_id = ? AND user_id = ? AND is_main_tenant = 0", (wg_id, user_id))

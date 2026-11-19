@@ -35,6 +35,7 @@ AI NOTE:  Generated with Claude (Anthropic), 15.11.2026 – see docs/ai_usage.md
 
 import datetime
 import random
+from contextlib import closing
 
 from core import auth, database
 from core.config import (
@@ -148,7 +149,8 @@ def main() -> None:
     password_hash = auth.hash_password(DEMO_PASSWORD)
     today = datetime.date.today()
 
-    with database.get_connection() as conn:
+    # AI-generated: OpenAI Codex, 19.11.2026. Close the connection after seeding.
+    with closing(database.get_connection()) as conn, conn:
         # --- 1. Seekers ---------------------------------------------------------
         seekers = {}  # user_id -> sliders
         for i in range(NUM_SEEKERS):
@@ -281,7 +283,8 @@ def main() -> None:
                                       "satisfied": int(random.random() < probability)})
 
     # --- Summary -------------------------------------------------------------------
-    with database.get_connection() as conn:
+    # AI-generated: OpenAI Codex, 19.11.2026. Close the summary connection too.
+    with closing(database.get_connection()) as conn:
         for table in ["users", "search_criteria", "wgs", "wg_members", "swipes", "matches", "feedback"]:
             count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
             print(f"{table:<16} {count:>4} rows")

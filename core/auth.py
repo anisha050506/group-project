@@ -14,13 +14,15 @@ WHAT BELONGS HERE
 WHAT DOES NOT BELONG HERE
     - st.session_state, forms, buttons  (-> views/ and components/layout.py)
 
-STATUS:   Step 4 – helpers are DONE, register_user / login_user are TODO.
+STATUS:   Registration and login implemented; email verification is simulated.
 AI NOTE:  Generated with Claude (Anthropic), 15.11.2026 – see docs/ai_usage.md
 ===============================================================================
 """
 
 import hashlib
+import re
 import secrets
+import sqlite3
 
 from core import database
 from core.config import ALLOWED_EMAIL_DOMAIN, ROLES
@@ -33,7 +35,7 @@ MIN_PASSWORD_LENGTH = 8
 # =============================================================================
 def is_valid_hsg_email(email: str) -> bool:
     """True if the email ends with @student.unisg.ch (case-insensitive)."""
-    return email.strip().lower().endswith(ALLOWED_EMAIL_DOMAIN)
+    return bool(re.fullmatch(r"[a-z0-9][a-z0-9._+\-]*" + re.escape(ALLOWED_EMAIL_DOMAIN), email.strip().lower()))
 
 
 def hash_password(password: str) -> str:
@@ -48,37 +50,43 @@ def hash_password(password: str) -> str:
 
 def verify_password(password: str, stored_hash: str) -> bool:
     """Check a typed password against the stored "salt$hash"."""
-    salt, expected = stored_hash.split("$", 1)
-    digest = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 100_000)
-    return secrets.compare_digest(digest.hex(), expected)
+    try:
+        salt, expected = stored_hash.split("$", 1)
+        digest = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 100_000)
+        return secrets.compare_digest(digest.hex(), expected)
+    except (ValueError, TypeError, AttributeError):
+        return False
 
 
 # =============================================================================
-# Main functions   (TODO)
+# AI-generated: OpenAI Codex, 19.11.2026. Prompt: code everything missing.
+# Main functions
 # =============================================================================
 def register_user(email: str, password: str, password_repeat: str, name: str, role: str) -> tuple[bool, str]:
-    """
-    TODO: create a new account. Return (success, message_for_the_user).
-
-    Steps:
-      1. is_valid_hsg_email(email)?            else -> (False, "Please use your HSG email")
-      2. password == password_repeat?          else -> (False, "Passwords do not match")
-      3. len(password) >= MIN_PASSWORD_LENGTH? else -> (False, "...")
-      4. role in ROLES?
-      5. database.get_user_by_email(email) is None?  else -> "Account already exists"
-      6. database.create_user(email, hash_password(password), role, name)
-      7. return (True, "Account created")
-    """
-    raise NotImplementedError("TODO (Person A): register_user")
+    """Create a demo account, returning success and a message for the form."""
+    email, name = email.strip().lower(), name.strip()
+    if not is_valid_hsg_email(email):
+        return False, "Please use your HSG email (@student.unisg.ch)."
+    if password != password_repeat:
+        return False, "Passwords do not match."
+    if len(password) < MIN_PASSWORD_LENGTH:
+        return False, f"Use at least {MIN_PASSWORD_LENGTH} characters for your password."
+    if not name or len(name) > 80:
+        return False, "Enter a first name of 1–80 characters."
+    if role not in ROLES:
+        return False, "Please choose a valid role."
+    if database.get_user_by_email(email):
+        return False, "An account with this email already exists."
+    try:
+        user_id = database.create_user(email, hash_password(password), role, name)
+    except sqlite3.IntegrityError:
+        return False, "An account with this email already exists."
+    # Course demo: checking the email domain simulates student verification.
+    database.update_profile(user_id, {"is_verified": 1})
+    return True, "Account created. Complete your profile to start matching."
 
 
 def login_user(email: str, password: str) -> dict | None:
-    """
-    TODO: return the user dict if email + password are correct, else None.
-
-    Steps:
-      1. user = database.get_user_by_email(email.strip().lower())
-      2. if user and verify_password(password, user["password_hash"]): return user
-      3. otherwise return None   (don't tell WHICH part was wrong – security)
-    """
-    raise NotImplementedError("TODO (Person A): login_user")
+    """Return the account on valid credentials, otherwise None."""
+    user = database.get_user_by_email(email)
+    return user if user and verify_password(password, user["password_hash"]) else None

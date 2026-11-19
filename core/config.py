@@ -24,9 +24,14 @@ CITY = "St. Gallen"
 UNIVERSITY_ADDRESS = "Dufourstrasse 50, 9000 St. Gallen"  # main HSG campus
 ALLOWED_EMAIL_DOMAIN = "@student.unisg.ch"                # only HSG students
 
-# File paths (relative to the repository root)
-DB_PATH = "data/wg_match.db"           # created automatically, NOT on GitHub
-MODEL_PATH = "models/match_model.pkl"  # trained ML model
+# AI-generated: OpenAI Codex, 19.11.2026. Stable paths and isolated test overrides.
+import os
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DB_PATH = os.environ.get("WG_MATCH_DB_PATH", str(PROJECT_ROOT / "data/wg_match.db"))
+MODEL_PATH = os.environ.get("WG_MATCH_MODEL_PATH", str(PROJECT_ROOT / "models/match_model.pkl"))
+UPLOAD_DIR = PROJECT_ROOT / "assets/uploads"
 
 # Roles: key stored in the database -> text shown to the user
 ROLES = {

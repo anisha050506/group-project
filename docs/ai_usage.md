@@ -18,4 +18,6 @@ Required by the grading criteria (no. 7) and the HSG rules on AI use. This file 
 | 24.10.2026 | Claude (Anthropic) | Anisha | Brainstorming app idea, attributes, name | – |
 | 15.11.2026 | Claude (Anthropic) | Anisha | Repository structure (steps 1–6): README, requirements, file headers, TODO lists, `app.py` routing, `config.py`, database schema, page layouts, helper functions | All files with "AI NOTE" in their header |
 | 15.11.2026 | Claude (Anthropic) | Anisha | Seed data script (fake users, WGs, swipes, feedback) | `data/seed_data.py` |
+| 19.11.2026 | OpenAI Codex | – | Complete SQLite read/write functions, add an in-memory example with SQL inserts for all eight tables, close seed connections, and validate database workflows | `core/database.py`, `data/database_example.py`, `data/seed_data.py`, `tests/test_database.py` |
+| 19.11.2026 | OpenAI Codex | – | Implement remaining account, profile, listing, photo, transport, matching, chat, offer, feedback, chart, and ML features; add service and Streamlit integration tests and update documentation | `app.py`, `core/`, `components/`, `views/`, `tests/test_features.py`, `README.md`, `docs/database_schema.md` |
 | | | | | |
