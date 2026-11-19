@@ -1,12 +1,11 @@
 # Look of the app. Colours can be changed at any time.
-# Brand palette (from the WG-Match pitch deck): dusty-rose accent and deep plum
-# text on a soft cream background.
+# Original palette: teal-green accent on a clean white background.
 # NOTE: the chart and chat-bubble colours live in core/config.py -> BRAND.
 # Keep primaryColor below in sync with BRAND["accent"], and textColor with
 # BRAND["ink"].
 [theme]
-primaryColor = "#C85475"              # buttons, sliders, links (dusty rose)
-backgroundColor = "#FBF5EC"           # page background (soft cream)
-secondaryBackgroundColor = "#F3E6E6"  # sidebar, input fields (soft rose-cream)
-textColor = "#2E2140"                 # deep plum / aubergine
+primaryColor = "#2E7D6B"              # buttons, sliders, links (teal-green)
+backgroundColor = "#FFFFFF"           # page background
+secondaryBackgroundColor = "#F3F6F5"  # sidebar, input fields
+textColor = "#1F2A2E"
 font = "sans serif"

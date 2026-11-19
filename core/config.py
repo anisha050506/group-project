@@ -123,15 +123,15 @@ MAX_TRAVEL_TIME_MIN = 60     # highest value on the "max travel time" slider
 #      (and, if you change them, background/text too).
 # =============================================================================
 BRAND = {
-    "accent":      "#C85475",  # primary accent (charts, gauge bar) = primaryColor
-    "accent_dark": "#A83E5E",  # darker accent for text on light surfaces
-    "accent_soft": "#F8DCE4",  # soft accent fill (your own chat bubble)
-    "accent_tint": "#F4DBE2",  # very light accent (chat avatar background)
-    "secondary":   "#6E5296",  # second chart series (plum)
-    "ink":         "#2E2140",  # deep plum text  = textColor
-    "muted":       "#8A7B90",  # muted grey for captions and timestamps
-    "chat_bg":     "#F5E9E6",  # chat history panel background
-    "gauge_low":   "#F6E1D9",  # compatibility gauge: 0–40 band
-    "gauge_mid":   "#F1E6D5",  # compatibility gauge: 40–70 band
-    "gauge_high":  "#E7DFEB",  # compatibility gauge: 70–100 band
+    "accent":      "#2E7D6B",  # primary accent (charts, gauge bar) = primaryColor
+    "accent_dark": "#1F6657",  # darker accent for text on light surfaces
+    "accent_soft": "#D9F4D0",  # soft accent fill (your own chat bubble)
+    "accent_tint": "#DCEEE6",  # very light accent (chat avatar background)
+    "secondary":   "#12B886",  # second chart series (emerald)
+    "ink":         "#1F2A2E",  # dark slate text  = textColor
+    "muted":       "#64776F",  # muted grey for captions and timestamps
+    "chat_bg":     "#EDF3EF",  # chat history panel background
+    "gauge_low":   "#FFF0F0",  # compatibility gauge: 0–40 band
+    "gauge_mid":   "#FFF8DB",  # compatibility gauge: 40–70 band
+    "gauge_high":  "#E6FCF5",  # compatibility gauge: 70–100 band
 }
