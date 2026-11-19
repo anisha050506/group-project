@@ -7,7 +7,7 @@ from components.forms import date_value, number_value, option_index
 from components.layout import require_login
 from core import database, transport_api
 from core.uploads import save_photo
-from core.config import AMENITIES, DISTRICTS, FLATMATE_GENDER_PREFS, SMOKING_OPTIONS, WG_TYPES
+from core.config import AMENITIES, FLATMATE_GENDER_PREFS, SMOKING_OPTIONS, WG_TYPES
 
 require_login()
 user_id = st.session_state.user_id
@@ -54,8 +54,7 @@ if is_main:
         data = {"title": st.text_input("Title", wg.get("title") or "", max_chars=120)}
         col1, col2 = st.columns(2)
         data["address"] = col1.text_input("Street and number", wg.get("address") or "", max_chars=200)
-        data["district"] = col2.selectbox("District", DISTRICTS, index=option_index(DISTRICTS, wg.get("district")))
-        data["postcode"] = col1.text_input("Postcode", wg.get("postcode") or "9000", max_chars=4)
+        data["postcode"] = col2.text_input("Postcode", wg.get("postcode") or "9000", max_chars=4)
         st.subheader("Costs")
         col1, col2, col3 = st.columns(3)
         data["rent_chf"] = col1.number_input("Rent / month incl. utilities (CHF)", min_value=0.0, value=float(number_value(wg, "rent_chf", 750)), step=10.0)

@@ -593,7 +593,8 @@ class AppFlowTests(FeatureFixture):
         app = self.app("ana.demo@student.unisg.ch", "demo1234")
         app.switch_page("views/insights.py").run()
         self.no_errors(app)
-        self.assertGreaterEqual(len(app.get("plotly_chart")), 3)
+        # Market charts: the map and the rent-vs-travel scatter.
+        self.assertGreaterEqual(len(app.get("plotly_chart")), 2)
         self.click(app, "Train / refresh model")
         self.assertEqual(ml_model.get_model_metrics()["feedback_rows"], 300)
 

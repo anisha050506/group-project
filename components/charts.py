@@ -26,15 +26,6 @@ def score_gauge(score: float):
     )).update_layout(height=280, margin={"t": 65, "b": 20})
 
 
-def rent_by_district_chart(wgs_df):
-    figure = go.Figure()
-    if not wgs_df.empty and {"district", "rent_chf"}.issubset(wgs_df.columns):
-        averages = wgs_df.groupby("district")["rent_chf"].mean().dropna().sort_values()
-        figure.add_trace(go.Bar(x=averages.index.tolist(), y=averages.tolist(), marker_color="#4c6ef5"))
-    figure.update_layout(xaxis_title="District", yaxis_title="Average monthly rent (CHF)", margin={"t": 20})
-    return figure
-
-
 def wg_map(wgs_df):
     figure = go.Figure()
     if not wgs_df.empty and {"latitude", "longitude"}.issubset(wgs_df.columns):

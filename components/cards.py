@@ -22,7 +22,8 @@ def wg_card(wg: dict, score: float | None = None, mismatches: list[str] | None =
     with st.container(border=True):
         _photo(wg.get("photo_path"))
         st.subheader(wg.get("title") or "Room in a shared flat")
-        st.caption(" · ".join(str(wg[key]) for key in ("district", "address") if wg.get(key)))
+        if wg.get("address"):
+            st.caption(str(wg["address"]))
         rent, size, travel = st.columns(3)
         rent.metric("Rent / month", f"CHF {wg['rent_chf']:,.0f}" if wg.get("rent_chf") is not None else "Unknown")
         size.metric("Room", f"{wg['room_size_m2']:g} m²" if wg.get("room_size_m2") is not None else "Unknown")

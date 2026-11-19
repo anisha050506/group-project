@@ -25,20 +25,15 @@ if not frame.empty:
     st.plotly_chart(charts.wg_map(frame), width="stretch")
     mapped = frame[["latitude", "longitude"]].notna().all(axis=1).sum()
     st.caption(f"{mapped} of {len(frame)} rooms have map coordinates. Verification is simulated for the course demo.")
-    left, right = st.columns(2)
-    with left:
-        st.subheader("Rent by district")
-        st.plotly_chart(charts.rent_by_district_chart(frame), width="stretch")
-    with right:
-        st.subheader("Rent and travel time")
-        points = frame.dropna(subset=["rent_chf", "travel_time_min"])
-        figure = go.Figure(go.Scatter(
-            x=points.travel_time_min.tolist(), y=points.rent_chf.tolist(), text=points.title.tolist(),
-            mode="markers", marker={"size": 12, "color": "#12b886"},
-            hovertemplate="%{text}<br>%{x} min · CHF %{y}<extra></extra>",
-        ))
-        figure.update_layout(xaxis_title="Minutes to HSG", yaxis_title="Monthly rent (CHF)")
-        st.plotly_chart(figure, width="stretch")
+    st.subheader("Rent and travel time")
+    points = frame.dropna(subset=["rent_chf", "travel_time_min"])
+    figure = go.Figure(go.Scatter(
+        x=points.travel_time_min.tolist(), y=points.rent_chf.tolist(), text=points.title.tolist(),
+        mode="markers", marker={"size": 12, "color": "#12b886"},
+        hovertemplate="%{text}<br>%{x} min · CHF %{y}<extra></extra>",
+    ))
+    figure.update_layout(xaxis_title="Minutes to HSG", yaxis_title="Monthly rent (CHF)")
+    st.plotly_chart(figure, width="stretch")
 else:
     st.info("Market charts will appear when there are active, verified room listings.")
 
