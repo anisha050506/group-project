@@ -24,6 +24,7 @@ TABLES (details: docs/database_schema.md)
     swipes           every like / pass (seeker -> WG and WG -> seeker)
     matches          created when BOTH sides liked each other
     messages         chat messages inside a match
+    conversation_reads  saved read position for each chat participant
     feedback         "was the match good?" -> training data for the ML model
 
 STATUS:   Tables and read/write functions implemented.
@@ -148,6 +149,15 @@ CREATE TABLE IF NOT EXISTS feedback (
     comment     TEXT,
     created_at  TEXT DEFAULT CURRENT_TIMESTAMP
 );
+
+-- AI-generated: OpenAI Codex, 19.11.2026. Persist each participant's chat read position.
+CREATE TABLE IF NOT EXISTS conversation_reads (
+    match_id             INTEGER REFERENCES matches(match_id),
+    user_id              INTEGER REFERENCES users(user_id),
+    last_read_message_id INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (match_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS messages_match_order ON messages(match_id, message_id);
 """
 
 
@@ -437,6 +447,17 @@ def get_seekers_who_liked_wg(wg_id: int) -> list[dict]:
     return [dict(row) for row in rows]
 
 
+# AI-generated: OpenAI Codex, 19.11.2026. Prompt: fix provider swiping so either side can swipe first.
+def get_swiped_seeker_ids(wg_id: int) -> list[int]:
+    """Seekers this WG has already liked or passed, regardless of seeker votes."""
+    with closing(get_connection()) as conn:
+        rows = conn.execute(
+            "SELECT seeker_id FROM swipes WHERE wg_id = ? AND swiped_by = 'wg' "
+            "ORDER BY seeker_id", (wg_id,),
+        ).fetchall()
+    return [row["seeker_id"] for row in rows]
+
+
 def get_matches_for_user(user_id: int) -> list[dict]:
     """Return matches visible to the seeker or any member, with display names."""
     with closing(get_connection()) as conn:
@@ -460,6 +481,49 @@ def update_match(match_id: int, data: dict) -> None:
 # =============================================================================
 # Messages & feedback
 # =============================================================================
+# AI-generated: OpenAI Codex, 19.11.2026. Prompt: make conversations async and organize chats like WhatsApp.
+def get_conversations_for_user(user_id: int) -> list[dict]:
+    """Authorized inbox with latest-message previews and durable unread counts."""
+    with closing(get_connection()) as conn:
+        rows = conn.execute(
+            "SELECT m.*, u.name AS seeker_name, w.title AS wg_title, "
+            "latest.message_id AS last_message_id, latest.text AS last_message_text, "
+            "latest.created_at AS last_message_at, latest.sender_id AS last_sender_id, "
+            "sender.name AS last_sender_name, COALESCE(r.last_read_message_id, 0) AS last_read_message_id, "
+            "(SELECT COUNT(*) FROM messages unread WHERE unread.match_id = m.match_id "
+            "AND unread.sender_id != ? AND unread.message_id > COALESCE(r.last_read_message_id, 0)) AS unread_count "
+            "FROM matches m JOIN users u ON u.user_id = m.seeker_id "
+            "JOIN wgs w ON w.wg_id = m.wg_id "
+            "LEFT JOIN messages latest ON latest.message_id = "
+            "(SELECT MAX(message_id) FROM messages WHERE match_id = m.match_id) "
+            "LEFT JOIN users sender ON sender.user_id = latest.sender_id "
+            "LEFT JOIN conversation_reads r ON r.match_id = m.match_id AND r.user_id = ? "
+            "WHERE m.seeker_id = ? OR EXISTS (SELECT 1 FROM wg_members member "
+            "WHERE member.wg_id = m.wg_id AND member.user_id = ?) "
+            "ORDER BY COALESCE(latest.created_at, m.created_at) DESC, "
+            "COALESCE(latest.message_id, 0) DESC, m.match_id DESC",
+            (user_id, user_id, user_id, user_id),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def mark_conversation_read(match_id: int, user_id: int, last_message_id: int) -> None:
+    """Advance only through displayed messages, without marking later arrivals read."""
+    with closing(get_connection()) as conn, conn:
+        cursor = conn.execute(
+            "INSERT INTO conversation_reads (match_id, user_id, last_read_message_id) "
+            "SELECT m.match_id, ?, COALESCE((SELECT MAX(message_id) FROM messages "
+            "WHERE match_id = m.match_id AND message_id <= ?), 0) "
+            "FROM matches m WHERE m.match_id = ? AND (m.seeker_id = ? OR EXISTS "
+            "(SELECT 1 FROM wg_members member WHERE member.wg_id = m.wg_id AND member.user_id = ?)) "
+            "ON CONFLICT(match_id, user_id) DO UPDATE SET last_read_message_id = "
+            "MAX(conversation_reads.last_read_message_id, excluded.last_read_message_id)",
+            (user_id, last_message_id, match_id, user_id, user_id),
+        )
+        if cursor.rowcount == 0:
+            raise ValueError("Only a participant can read this conversation.")
+
+
 def send_message(match_id: int, sender_id: int, text: str) -> None:
     """Insert a message from a seeker or member of the matched WG."""
     text = text.strip()

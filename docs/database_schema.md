@@ -4,7 +4,7 @@ Owner: Person B. The source of truth is `SCHEMA` in `core/database.py`. Update t
 
 For a small in-memory database in the `sqlite3` / `pandas` /
 `DB.executescript(...)` format, run `python -m data.database_example`.
-It creates all eight tables using the shared schema and inserts related sample
+It creates all nine tables using the shared schema and inserts related sample
 rows into every table. Use it from Python like this:
 
 ```python
@@ -38,6 +38,7 @@ users ──< wg_members >── wgs
 | `swipes` | one like / pass | seeker_id, wg_id, swiped_by ('seeker' / 'wg'), liked |
 | `matches` | both sides liked each other | match_id, seeker_id, wg_id, status, viewing_done |
 | `messages` | one chat message | match_id, sender_id, text |
+| `conversation_reads` | one participant's saved read position in a chat | match_id, user_id, last_read_message_id |
 | `feedback` | "was the match good?" | seeker_id, wg_id, satisfied (0/1) |
 
 ## The 8 behavioural sliders (0–10)
@@ -66,3 +67,14 @@ one transaction. The accepted match remains accessible for chat and feedback.
 `save_match_feedback` permits one feedback submission per accepted match,
 from its seeker. The lower-level `save_feedback` remains available to seed
 training examples, which may include repeated seeker/WG pairs.
+
+## Live conversations
+
+`get_conversations_for_user` restricts the inbox to matches involving the
+seeker or a member of the WG. It returns latest-message previews and counts
+only other participants' messages above the viewer's saved read position.
+`mark_conversation_read` advances that position through the last displayed
+message, so a message arriving during a refresh stays unread until displayed.
+Read positions are independent for each WG member and seeker. `init_db`
+adds the read-position table and message lookup index to existing databases
+without replacing any data. The chat page polls the inbox every two seconds.

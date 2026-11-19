@@ -1,4 +1,4 @@
-"""All eight project tables with small sample datasets, in the requested format.
+"""All project tables with small sample datasets, in the requested format.
 
 Run from the repository root: python -m data.database_example
 Or import DB and query it with pd.read_sql_query("SELECT * FROM users", DB).
@@ -77,13 +77,18 @@ DB.executescript(SCHEMA + '''
 
     INSERT INTO feedback (feedback_id, seeker_id, wg_id, satisfied, comment) VALUES
         (1, 1, 1, 1, 'We get along well and enjoy cooking together.');
+
+    -- AI-generated: OpenAI Codex, 19.11.2026. Sample durable chat read positions.
+    INSERT INTO conversation_reads (match_id, user_id, last_read_message_id) VALUES
+        (1, 1, 2),
+        (1, 2, 1);
 ''')
 
 
 if __name__ == "__main__":
     for table in (
         "users", "search_criteria", "wgs", "wg_members", "swipes", "matches",
-        "messages", "feedback",
+        "messages", "feedback", "conversation_reads",
     ):
         print(f"\n{table}")
         # Show profile data without printing account password hashes.

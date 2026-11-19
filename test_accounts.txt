@@ -1,0 +1,124 @@
+WG MATCH - LOCAL TEST ACCOUNTS
+Created: 2026-11-19
+App: http://localhost:8503
+
+16 fictional accounts: 8 seekers, 4 main tenants, 4 flatmates.
+All profiles and lifestyle sliders are complete; verification is simulated.
+WG addresses, map positions, and travel times are fictional demo values.
+No likes, passes, or matches have been pre-created for these accounts.
+Existing accounts, listings, swipes, matches, and messages were preserved.
+
+QUICK TEST
+1. Log in as Lena Meier and open Swipe. Like a test WG.
+2. Log out, then log in as that WG's main tenant and like Lena.
+3. Open Matches & chat. Either side may also swipe first.
+
+WGS
+TEST - Rotmonten Kitchen WG (WG ID 2)
+  Main tenant: Nina Baumann (Test)
+  Rent: CHF 720/month; demo commute: 6 minutes
+
+TEST - Quiet Rosenberg WG (WG ID 3)
+  Main tenant: David Frei (Test)
+  Rent: CHF 850/month; demo commute: 8 minutes
+
+TEST - City Study WG (WG ID 4)
+  Main tenant: Sara Gerber (Test)
+  Rent: CHF 950/month; demo commute: 12 minutes
+
+TEST - Relaxed Langgasse WG (WG ID 5)
+  Main tenant: Tim Moser (Test)
+  Rent: CHF 680/month; demo commute: 10 minutes
+
+
+SEEKERS
+Name: Lena Meier (Test)
+Email: wgtest.lena.meier@student.unisg.ch
+Password: r4yVo_R6NmghzpKN
+Role: Seeker
+
+Name: Noah Keller (Test)
+Email: wgtest.noah.keller@student.unisg.ch
+Password: tDKEdcCgAWSMsQOi
+Role: Seeker
+
+Name: Mila Brunner (Test)
+Email: wgtest.mila.brunner@student.unisg.ch
+Password: da5lCL2046g-83mP
+Role: Seeker
+
+Name: Luca Rossi (Test)
+Email: wgtest.luca.rossi@student.unisg.ch
+Password: RzKtDCS9n20XfoQz
+Role: Seeker
+
+Name: Emma Weber (Test)
+Email: wgtest.emma.weber@student.unisg.ch
+Password: L6PZA_om5JVqEeEo
+Role: Seeker
+
+Name: Elias Huber (Test)
+Email: wgtest.elias.huber@student.unisg.ch
+Password: jTtjsuNwcBj3UWBF
+Role: Seeker
+
+Name: Sofia Schmid (Test)
+Email: wgtest.sofia.schmid@student.unisg.ch
+Password: NZuojVbLTnaiU48q
+Role: Seeker
+
+Name: Leon Fischer (Test)
+Email: wgtest.leon.fischer@student.unisg.ch
+Password: IKH13FYcddgaa9NI
+Role: Seeker
+
+
+WG PROVIDERS AND FLATMATES
+Name: Nina Baumann (Test)
+Email: wgtest.nina.baumann@student.unisg.ch
+Password: Pshq7885I-QK8sQu
+Role: Main tenant
+WG: TEST - Rotmonten Kitchen WG
+
+Name: Alina Steiner (Test)
+Email: wgtest.alina.steiner@student.unisg.ch
+Password: 0Rc2L3dgb0gXp3zs
+Role: Flatmate
+WG: TEST - Rotmonten Kitchen WG
+
+Name: David Frei (Test)
+Email: wgtest.david.frei@student.unisg.ch
+Password: O4OHFYzT83DNSKYe
+Role: Main tenant
+WG: TEST - Quiet Rosenberg WG
+
+Name: Jan Dubois (Test)
+Email: wgtest.jan.dubois@student.unisg.ch
+Password: MvJYRqj2BNBPRQoT
+Role: Flatmate
+WG: TEST - Quiet Rosenberg WG
+
+Name: Sara Gerber (Test)
+Email: wgtest.sara.gerber@student.unisg.ch
+Password: vVTTNMCQreW5dBVa
+Role: Main tenant
+WG: TEST - City Study WG
+
+Name: Chiara Bianchi (Test)
+Email: wgtest.chiara.bianchi@student.unisg.ch
+Password: wx17qtc2spclRcqh
+Role: Flatmate
+WG: TEST - City Study WG
+
+Name: Tim Moser (Test)
+Email: wgtest.tim.moser@student.unisg.ch
+Password: B1wM56o1Y7BnNhIk
+Role: Main tenant
+WG: TEST - Relaxed Langgasse WG
+
+Name: Nico Costa (Test)
+Email: wgtest.nico.costa@student.unisg.ch
+Password: n_CsBeDmSM9MGvHu
+Role: Flatmate
+WG: TEST - Relaxed Langgasse WG
+

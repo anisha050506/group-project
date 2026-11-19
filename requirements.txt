@@ -1,7 +1,7 @@
 # Install all libraries with:  pip install -r requirements.txt
 # Tested with Python 3.11+
 
-streamlit>=1.50      # web app framework (pages, forms, sliders)
+streamlit>=1.66      # live chat fragments and auto-scrolling conversation containers
 pandas>=2.0          # tables / DataFrames
 numpy>=1.26          # numerical calculations
 plotly>=5.24         # interactive charts (radar chart, map, bar charts)

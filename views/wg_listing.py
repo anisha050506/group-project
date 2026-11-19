@@ -4,21 +4,41 @@ from pathlib import Path
 import streamlit as st
 from components import charts, cards
 from components.forms import date_value, number_value, option_index
-from components.layout import require_role
+from components.layout import require_login
 from core import database, transport_api
 from core.uploads import save_photo
 from core.config import AMENITIES, DISTRICTS, FLATMATE_GENDER_PREFS, SMOKING_OPTIONS, WG_TYPES
 
-require_role("offer_wg")
-st.title("My WG")
+require_login()
 user_id = st.session_state.user_id
+# AI-generated: OpenAI Codex, 19.11.2026. Prompt: make a feature where we can offer a WG.
+if st.session_state.role != "offer_wg":
+    st.title("Offer a WG")
+    st.write("Have a room available in your shared flat? Create a listing with a photo, rent, availability, and house rules to find a compatible flatmate.")
+    st.info("Starting a listing switches your account to “I offer a WG”. Your profile and saved search criteria are kept. You can switch back in My profile.")
+    if st.button("Start offering a WG", type="primary"):
+        database.update_role(user_id, "offer_wg")
+        st.session_state.role = "offer_wg"
+        st.session_state["_next_page"] = "views/wg_listing.py"
+        st.rerun()
+    st.stop()
+
 wg = database.get_wg_for_user(user_id) or {}
 wg_id = wg.get("wg_id")
+st.title("My WG" if wg_id else "Offer a WG")
 members = database.get_wg_members(wg_id) if wg_id else []
 is_main = not wg_id or any(member["user_id"] == user_id and member["is_main_tenant"] for member in members)
 if wg_id:
     st.session_state.wg_id = wg_id
     st.caption("Address verification is simulated for this course demo.")
+    if not wg.get("is_active"):
+        st.info("Your room is marked unavailable. This listing is hidden from seekers.")
+    elif not wg.get("is_verified"):
+        st.info("Your listing is saved but hidden from seekers. The main tenant can enable simulated address verification and save to make it visible.")
+    else:
+        st.success("Your WG is available to seekers whose search criteria match this room.")
+    st.page_link("views/swipe.py", label="Find a flatmate", icon=":material/swipe:")
+    st.page_link("views/profile.py", label="Complete your lifestyle profile", icon=":material/person:")
     if not is_main:
         cards.wg_card(wg)
         st.info("The main tenant manages this listing. You can update your lifestyle in My profile.")
@@ -26,6 +46,9 @@ if wg_id:
         st.image(wg["photo_path"], width=320)
 
 if is_main:
+    if not wg_id:
+        st.write("Tell students about the room and your flat. You will be added as the main tenant and can edit the listing or add flatmates after saving.")
+        st.caption("To show your room to seekers, keep “Room available” checked and enable simulated address verification. You can also save first and verify later.")
     with st.form(f"wg_form_{wg_id or 'new'}"):
         st.subheader("Location")
         data = {"title": st.text_input("Title", wg.get("title") or "", max_chars=120)}
@@ -67,10 +90,11 @@ if is_main:
         remove_photo = st.checkbox("Remove current photo") if wg.get("photo_path") else False
         data["is_verified"] = int(st.checkbox("Simulate address verification (course demo)", value=bool(wg.get("is_verified"))))
         refresh = st.checkbox("Refresh public transport data")
-        submitted = st.form_submit_button("Save WG", type="primary")
+        submitted = st.form_submit_button("Save WG" if wg_id else "Offer WG", type="primary")
     if submitted:
         try:
-            if not data["title"].strip() or not data["address"].strip():
+            data["title"], data["address"] = data["title"].strip(), data["address"].strip()
+            if not data["title"] or not data["address"]:
                 raise ValueError("Enter a title and street address.")
             if not data["postcode"].isdigit() or len(data["postcode"]) != 4:
                 raise ValueError("Enter a four-digit Swiss postcode.")
@@ -97,12 +121,13 @@ if is_main:
                 data["photo_path"] = save_photo(upload, f"wg_{user_id}")
             elif remove_photo:
                 data["photo_path"] = None
+            created = not wg_id
             if wg_id:
                 database.update_wg(wg_id, data)
             else:
                 wg_id = database.create_wg(data, user_id)
             st.session_state.wg_id = wg_id
-            st.session_state["_notice"] = "WG saved." + (" Travel lookup is unavailable; refresh it later." if unavailable else "")
+            st.session_state["_notice"] = ("WG listing created." if created else "WG saved.") + (" Travel lookup is unavailable; refresh it later." if unavailable else "")
             st.rerun()
         except ValueError as exc:
             st.error(str(exc))

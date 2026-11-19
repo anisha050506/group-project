@@ -18,8 +18,8 @@ WHAT DOES NOT BELONG HERE
 
 ROUTING LOGIC
     not logged in            -> Log in, Register
-    logged in as "search_wg" -> Swipe, Matches, Insights | Profile, Search criteria
-    logged in as "offer_wg"  -> Swipe, Matches, Insights | Profile, My WG
+    logged in as "search_wg" -> Swipe, Matches, Insights | Profile, Search criteria, Offer a WG
+    logged in as "offer_wg"  -> Swipe, Matches, Insights | Profile, Offer a WG
 
 STATUS:   DONE (step 4) (works). Add new pages here when the group agrees.
 AI NOTE:  Generated with Claude (Anthropic), 15.11.2026 – see docs/ai_usage.md
@@ -64,7 +64,8 @@ login_page = st.Page("views/login.py", title="Log in", icon=":material/login:")
 register_page = st.Page("views/register.py", title="Register", icon=":material/person_add:")
 profile_page = st.Page("views/profile.py", title="My profile", icon=":material/person:")
 criteria_page = st.Page("views/search_criteria.py", title="Search criteria", icon=":material/tune:")
-listing_page = st.Page("views/wg_listing.py", title="My WG", icon=":material/home:")
+# AI-generated: OpenAI Codex, 19.11.2026. Prompt: make a feature where we can offer a WG.
+listing_page = st.Page("views/wg_listing.py", title="Offer a WG", icon=":material/home:")
 swipe_page = st.Page("views/swipe.py", title="Swipe", icon=":material/swipe:")
 matches_page = st.Page("views/matches.py", title="Matches & chat", icon=":material/favorite:")
 insights_page = st.Page("views/insights.py", title="Insights", icon=":material/insights:")
@@ -76,7 +77,7 @@ elif st.session_state.role == "search_wg":
     navigation = st.navigation(
         {
             "Find a WG": [swipe_page, matches_page, insights_page],
-            "My account": [profile_page, criteria_page],
+            "My account": [profile_page, criteria_page, listing_page],
         }
     )
 else:  # role == "offer_wg"

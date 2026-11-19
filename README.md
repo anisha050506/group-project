@@ -15,7 +15,7 @@ Group project in *Fundamentals and Methods of Computer Science*, University of S
 - Only verified students can join. Seekers and WG members answer the same lifestyle questions (tidiness, sociability, noise, guests, sleep rhythm, …).
 - Hard filters (budget, move-in date, travel time to HSG, smoking, gender preference) hide WGs that can never work.
 - The remaining WGs are ranked by a compatibility score, supported by our own machine-learning model.
-- Both sides swipe. A mutual like becomes a match, which leads to a chat, a viewing and finally the room.
+- Both sides swipe and either side can like first. A mutual like becomes a match, which leads to a chat, a viewing and finally the room.
 
 **Future features (not in scope for this project):** organizing dinner parties between WGs, an admin panel, automated paperwork (sublease contract, registration in St. Gallen).
 
@@ -45,7 +45,7 @@ streamlit run app.py
 
 All required libraries are listed in `requirements.txt`.
 
-To try a small in-memory database with SQL inserts for all eight tables, run
+To try a small in-memory database with SQL inserts for all nine tables, run
 `python -m data.database_example`. It uses `sqlite3`, `pandas`, and
 `DB.executescript(...)` and leaves the saved app database untouched.
 
@@ -62,6 +62,31 @@ verification email is sent. Address verification is an explicit simulation
 checkbox on the listing form. Transport times and map coordinates use the
 [Swiss Transport API](https://transport.opendata.ch/docs.html); failed lookups
 stay unknown and can be refreshed from the listing form.
+
+To offer a room, log in and open **Offer a WG** in the sidebar. Seekers can
+choose **Start offering a WG** to switch to the provider role while keeping
+their profile and saved criteria. Enter the room details, rent, availability,
+house rules, and an optional photo, then click **Offer WG**. Keep **Room
+available** checked and enable **Simulate address verification (course demo)**
+to make the listing visible to seekers. The page shows its visibility status;
+you can edit the offer, add registered flatmates, or mark the room unavailable
+later. Complete the lifestyle sliders in **My profile** before matching.
+
+**Matches & chat** has a searchable inbox, recent-message previews, unread
+counts, and a separate conversation pane. Messages and new matches update
+automatically every two seconds while the page is open. Conversations stay
+selected when new messages arrive; read positions are saved separately for
+each participant. Sent and received messages have distinct bubbles, day
+separators, and St. Gallen timestamps. Viewing, room-offer, and feedback actions
+are under the conversation's detail sections. Streamlit 1.66 or later is
+required for the auto-scrolling conversation container.
+
+The provider's **Swipe** page shows eligible seekers even before they have
+liked the WG. A match is created only after both sides like each other.
+When no candidates remain, **Why candidates are hidden** explains unmet
+requirements, incomplete profiles, and previous swipes. Unknown travel times
+cannot satisfy a seeker's travel limit; correct the listing's address and use
+**Refresh public transport data** on the WG form to retry the lookup.
 
 The model is a random forest trained on the normalized absolute differences
 between the eight seeker and WG lifestyle sliders. Evaluation holds out whole
@@ -123,9 +148,10 @@ group-project/
 │   ├── layout.py      login checks, session handling, sidebar and logout
 │   ├── forms.py       saved defaults for editable forms
 │   ├── cards.py       WG card / seeker card
+│   ├── chat.py        chat bubbles, conversation headers, and local timestamps
 │   └── charts.py      radar chart, score gauge, rent per district, map
 ├── data/
-│   ├── database_example.py  small in-memory SQLite example for all eight tables
+│   ├── database_example.py  small in-memory SQLite example for all nine tables
 │   ├── seed_data.py   creates fake users, WGs, swipes and feedback
 │   └── wg_match.db    the database (created automatically, not on GitHub)
 ├── docs/

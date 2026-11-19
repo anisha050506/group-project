@@ -35,7 +35,16 @@ else:
         st.stop()
     candidates = matching.rank_seekers_for_wg(wg["wg_id"])
 if not candidates:
-    st.info("No more rooms meet your criteria right now. Adjust your search or check back later." if is_seeker else "No unanswered likes meet your WG's requirements yet. Check back later.")
+    # AI-generated: OpenAI Codex, 19.11.2026. Prompt: explain why Cyril cannot swipe on Jack's WG.
+    st.info("No more rooms meet your criteria right now. Adjust your search or check back later." if is_seeker else "No unswiped seekers meet this WG's requirements right now.")
+    exclusions = matching.swipe_exclusions(user_id)
+    if exclusions:
+        with st.expander("Why candidates are hidden", expanded=True):
+            for item in exclusions:
+                st.write(item["name"])
+                for reason in item["reasons"]:
+                    st.caption(reason)
+        st.page_link("views/search_criteria.py" if is_seeker else "views/wg_listing.py", label="Edit search criteria" if is_seeker else "Edit WG requirements")
     st.stop()
 # Saved swipes disappear from ranking, so always show the first remaining row.
 candidate = candidates[0]
