@@ -1,8 +1,9 @@
 # Look of the app. Colours can be changed at any time.
-# Warm palette: a friendly orange accent on a soft cream background.
+# Brand palette (from the WG-Match pitch deck): coral-orange accent and deep
+# plum text on a soft cream background.
 [theme]
-primaryColor = "#E67A2E"              # buttons, sliders, links (warm orange)
-backgroundColor = "#FDF6EE"           # page background (warm cream)
-secondaryBackgroundColor = "#F8E8D6"  # sidebar, input fields (warm sand)
-textColor = "#3B2E27"                 # warm dark brown
+primaryColor = "#E85C42"              # buttons, sliders, links (coral-orange)
+backgroundColor = "#FBF5EC"           # page background (soft cream)
+secondaryBackgroundColor = "#F2E7DB"  # sidebar, input fields (warm sand)
+textColor = "#2E2140"                 # deep plum / aubergine
 font = "sans serif"

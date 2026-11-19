@@ -29,7 +29,7 @@ if not frame.empty:
     points = frame.dropna(subset=["rent_chf", "travel_time_min"])
     figure = go.Figure(go.Scatter(
         x=points.travel_time_min.tolist(), y=points.rent_chf.tolist(), text=points.title.tolist(),
-        mode="markers", marker={"size": 12, "color": "#E67A2E"},
+        mode="markers", marker={"size": 12, "color": "#E85C42"},
         hovertemplate="%{text}<br>%{x} min · CHF %{y}<extra></extra>",
     ))
     figure.update_layout(xaxis_title="Minutes to HSG", yaxis_title="Monthly rent (CHF)")
