@@ -40,10 +40,43 @@ def logout() -> None:
     st.rerun()
 
 
+def show_notifications() -> None:
+    """Sidebar bell: unread messages and brand-new matches, plus a toast the
+    first time a new one appears during this session."""
+    user_id = st.session_state.get("user_id")
+    if not user_id:
+        return
+    counts = st.session_state.get("_notif") or database.get_notification_counts(user_id)
+
+    # Toast only for events that arrived AFTER this session's first render, so we
+    # don't pop a toast for the backlog the moment someone logs in.
+    seen = st.session_state.get("_notify_seen")
+    if seen is not None:
+        if counts["new_matches"] > seen.get("new_matches", 0):
+            st.toast("It's a match!", icon="❤️")
+        if counts["unread_messages"] > seen.get("unread_messages", 0):
+            st.toast("New message", icon="✉️")
+    st.session_state["_notify_seen"] = {
+        "new_matches": counts["new_matches"],
+        "unread_messages": counts["unread_messages"],
+    }
+
+    parts = []
+    if counts["new_matches"]:
+        parts.append(f"{counts['new_matches']} new match" + ("es" if counts["new_matches"] != 1 else ""))
+    if counts["unread_messages"]:
+        parts.append(f"{counts['unread_messages']} unread message" + ("s" if counts["unread_messages"] != 1 else ""))
+    if parts:
+        st.info(":material/notifications_active: " + " · ".join(parts))
+    else:
+        st.caption(":material/notifications: No new notifications")
+
+
 def sidebar_user_box() -> None:
     with st.sidebar:
         st.divider()
         st.write(st.session_state.user_name or "User")
         st.caption(ROLES.get(st.session_state.role, ""))
+        show_notifications()
         if st.button("Log out", icon=":material/logout:", width="stretch"):
             logout()

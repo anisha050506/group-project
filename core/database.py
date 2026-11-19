@@ -507,6 +507,34 @@ def get_conversations_for_user(user_id: int) -> list[dict]:
     return [dict(row) for row in rows]
 
 
+def get_notification_counts(user_id: int) -> dict:
+    """In-app notification badge data for a user: how many messages they have
+    not read yet, and how many brand-new matches have no chat started. Both are
+    derived live from existing tables, so no extra state is stored."""
+    with closing(get_connection()) as conn:
+        row = conn.execute(
+            "WITH my_matches AS ("
+            "  SELECT m.match_id FROM matches m WHERE m.seeker_id = ?"
+            "  OR EXISTS (SELECT 1 FROM wg_members wm WHERE wm.wg_id = m.wg_id AND wm.user_id = ?)"
+            ") "
+            "SELECT "
+            "(SELECT COUNT(*) FROM my_matches mm WHERE NOT EXISTS "
+            "   (SELECT 1 FROM messages msg WHERE msg.match_id = mm.match_id)) AS new_matches, "
+            "(SELECT COUNT(*) FROM messages msg JOIN my_matches mm ON mm.match_id = msg.match_id "
+            "   LEFT JOIN conversation_reads r ON r.match_id = msg.match_id AND r.user_id = ? "
+            "   WHERE msg.sender_id != ? "
+            "   AND msg.message_id > COALESCE(r.last_read_message_id, 0)) AS unread_messages",
+            (user_id, user_id, user_id, user_id),
+        ).fetchone()
+    new_matches = row["new_matches"] or 0
+    unread_messages = row["unread_messages"] or 0
+    return {
+        "new_matches": new_matches,
+        "unread_messages": unread_messages,
+        "total": new_matches + unread_messages,
+    }
+
+
 def mark_conversation_read(match_id: int, user_id: int, last_message_id: int) -> None:
     """Advance only through displayed messages, without marking later arrivals read."""
     with closing(get_connection()) as conn, conn:

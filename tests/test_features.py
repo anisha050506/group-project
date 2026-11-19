@@ -192,6 +192,26 @@ class WorkflowTests(FeatureFixture):
         with self.assertRaises(ValueError):
             database.mark_conversation_read(match_id, outsider, latest_id)
 
+    def test_notification_counts_track_new_matches_and_unread_messages(self):
+        # A fresh match with no chat counts as a new-match notification for both sides.
+        match_id = self.new_match()
+        for user_id in (self.seeker, self.owner, self.member):
+            counts = database.get_notification_counts(user_id)
+            self.assertEqual((counts["new_matches"], counts["unread_messages"]), (1, 0))
+        # Once a message exists it is no longer a "new match"; recipients see unread.
+        database.send_message(match_id, self.owner, "Welcome!")
+        self.assertEqual(database.get_notification_counts(self.owner),
+                         {"new_matches": 0, "unread_messages": 0, "total": 0})
+        self.assertEqual(database.get_notification_counts(self.seeker),
+                         {"new_matches": 0, "unread_messages": 1, "total": 1})
+        # Reading the conversation clears the unread notification.
+        latest_id = database.get_messages(match_id)[-1]["message_id"]
+        database.mark_conversation_read(match_id, self.seeker, latest_id)
+        self.assertEqual(database.get_notification_counts(self.seeker)["total"], 0)
+        # Someone with no matches has nothing to notify.
+        outsider = database.create_user("nobody@student.unisg.ch", "hash", "search_wg", "Nobody")
+        self.assertEqual(database.get_notification_counts(outsider)["total"], 0)
+
     def test_conversations_sort_by_latest_activity_and_show_preview(self):
         first_match = self.new_match()
         other = database.create_user("bea@student.unisg.ch", "hash", "search_wg", "Bea")

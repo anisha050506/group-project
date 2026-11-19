@@ -76,6 +76,9 @@ if st.session_state.user_id is not None:
     else:
         st.session_state.role = account["role"]
         st.session_state.user_name = account.get("name") or account["email"]
+        # Notification counts, computed once per rerun and reused by the menu
+        # badge below and the sidebar bell (components/layout.py).
+        st.session_state["_notif"] = database.get_notification_counts(st.session_state.user_id)
 
 # --- 4. Define every page once (file path, menu title, icon) -----------------
 login_page = st.Page("views/login.py", title="Log in", icon=":material/login:")
@@ -85,7 +88,10 @@ criteria_page = st.Page("views/search_criteria.py", title="Search criteria", ico
 # AI-generated: OpenAI Codex, 19.11.2026. Prompt: make a feature where we can offer a WG.
 listing_page = st.Page("views/wg_listing.py", title="Offer a WG", icon=":material/home:")
 swipe_page = st.Page("views/swipe.py", title="Swipe", icon=":material/swipe:")
-matches_page = st.Page("views/matches.py", title="Matches & chat", icon=":material/favorite:")
+# Show a live count badge on the Matches menu item, e.g. "Matches & chat (3)".
+_notif_total = (st.session_state.get("_notif") or {}).get("total", 0)
+_matches_title = f"Matches & chat ({_notif_total})" if _notif_total else "Matches & chat"
+matches_page = st.Page("views/matches.py", title=_matches_title, icon=":material/favorite:")
 insights_page = st.Page("views/insights.py", title="Insights", icon=":material/insights:")
 
 # --- 5. Build the menu depending on login status and role -------------------
