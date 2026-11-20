@@ -156,16 +156,16 @@ NAMED_TEST_SEEKERS = [
     ("Leon Fischer", "wgtest.leon.fischer@student.unisg.ch", "IKH13FYcddgaa9NI"),
 ]
 NAMED_TEST_WGS = [
-    {"title": "TEST - Rotmonten Kitchen WG", "district": "Rotmonten", "rent": 720,
+    {"title": "Rotmonten Kitchen WG", "district": "Rotmonten", "rent": 720,
      "main": ("Nina Baumann", "wgtest.nina.baumann@student.unisg.ch", "Pshq7885I-QK8sQu"),
      "flatmate": ("Alina Steiner", "wgtest.alina.steiner@student.unisg.ch", "0Rc2L3dgb0gXp3zs")},
-    {"title": "TEST - Quiet Rosenberg WG", "district": "Rosenberg", "rent": 850,
+    {"title": "Quiet Rosenberg WG", "district": "Rosenberg", "rent": 850,
      "main": ("David Frei", "wgtest.david.frei@student.unisg.ch", "O4OHFYzT83DNSKYe"),
      "flatmate": ("Jan Dubois", "wgtest.jan.dubois@student.unisg.ch", "MvJYRqj2BNBPRQoT")},
-    {"title": "TEST - City Study WG", "district": "Zentrum", "rent": 950,
+    {"title": "City Study WG", "district": "Zentrum", "rent": 950,
      "main": ("Sara Gerber", "wgtest.sara.gerber@student.unisg.ch", "vVTTNMCQreW5dBVa"),
      "flatmate": ("Chiara Bianchi", "wgtest.chiara.bianchi@student.unisg.ch", "wx17qtc2spclRcqh")},
-    {"title": "TEST - Relaxed Langgasse WG", "district": "Langgasse", "rent": 680,
+    {"title": "Relaxed Langgasse WG", "district": "Langgasse", "rent": 680,
      "main": ("Tim Moser", "wgtest.tim.moser@student.unisg.ch", "B1wM56o1Y7BnNhIk"),
      "flatmate": ("Nico Costa", "wgtest.nico.costa@student.unisg.ch", "n_CsBeDmSM9MGvHu")},
 ]
