@@ -1,9 +1,12 @@
-"""Random forest estimating satisfaction from eight lifestyle differences.
-
-Evaluation holds out whole seekers so repeated feedback from a seeker never
-appears on both sides of the evaluation split. Demo feedback is synthetic.
+"""Logistic regression estimating the chance a match succeeds (both sides
+accept) from the eight lifestyle differences, and the per-factor weights it
+learns. Evaluation uses repeated held-out-seeker cross-validation so repeated
+matches from a seeker never appear on both sides of a split. Demo outcomes are
+synthetic.
 """
 # AI-generated: OpenAI Codex, 19.11.2026. Prompt: code everything missing.
+# AI-generated: Claude (Anthropic), 22.11.2026. Prompt: "predict mutual matches
+# with logistic regression and expose learned per-factor weights".
 import json
 import os
 import pickle

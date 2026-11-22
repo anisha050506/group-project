@@ -1,6 +1,8 @@
 """Getting-started checklist shown to new users so they know the few steps
 needed before they can match (complete profile, lifestyle answers, and either
 search criteria or a published WG). Rendered on the profile page."""
+# AI-generated: Claude (Anthropic), 22.11.2026. Prompt: "add an onboarding
+# checklist guiding new users through profile, sliders and criteria".
 import streamlit as st
 
 from core import database, matching

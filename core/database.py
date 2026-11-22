@@ -424,6 +424,7 @@ def save_swipe(seeker_id: int, wg_id: int, swiped_by: str, liked: bool) -> bool:
     return False
 
 
+# AI-generated: Claude (Anthropic), 22.11.2026. Undo a swipe (and its open match).
 def undo_last_swipe(seeker_id: int, wg_id: int, swiped_by: str) -> None:
     """Take back a just-made like/pass so a misclick is not permanent. If that
     like had created a match that is still open with no messages yet, remove the
@@ -527,6 +528,7 @@ def get_conversations_for_user(user_id: int) -> list[dict]:
     return [dict(row) for row in rows]
 
 
+# AI-generated: Claude (Anthropic), 22.11.2026. In-app notification counts.
 def get_notification_counts(user_id: int) -> dict:
     """In-app notification badge data for a user: how many messages they have
     not read yet, and how many brand-new matches have no chat started. Both are

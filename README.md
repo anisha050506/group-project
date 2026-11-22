@@ -53,7 +53,7 @@ To try a small in-memory database with SQL inserts for all nine tables, run
 
 Registration, login, saved profiles and photos, search criteria, listing edits,
 WG member management, ranked swiping, chat, viewings, room offers, acceptance,
-feedback, and Insights are implemented. Only the main tenant edits a listing
+and Insights are implemented. Only the main tenant edits a listing
 or offers its room. Accepting an offer hides the listing and closes competing
 matches in the same transaction. Log out to test the other side of a match.
 
@@ -77,8 +77,8 @@ counts, and a separate conversation pane. Messages and new matches update
 automatically every two seconds while the page is open. Conversations stay
 selected when new messages arrive; read positions are saved separately for
 each participant. Sent and received messages have distinct bubbles, day
-separators, and St. Gallen timestamps. Viewing, room-offer, and feedback actions
-are under the conversation's detail sections. Streamlit 1.66 or later is
+separators, and St. Gallen timestamps. Viewing, room-offer, and acceptance
+actions are under the conversation's detail sections. Streamlit 1.66 or later is
 required for the auto-scrolling conversation container.
 
 The provider's **Swipe** page shows eligible seekers even before they have
@@ -88,13 +88,18 @@ requirements, incomplete profiles, and previous swipes. Unknown travel times
 cannot satisfy a seeker's travel limit; correct the listing's address and use
 **Refresh public transport data** on the WG form to retry the lookup.
 
-The model is a random forest trained on the normalized absolute differences
-between the eight seeker and WG lifestyle sliders. Evaluation holds out whole
-seekers, reports accuracy against a majority baseline, balanced accuracy, ROC
-AUC, and Brier score, then refits on all feedback. Seed feedback is synthetic;
-demo metrics do not establish performance on real tenants. When a trained
-model is available, ranking combines 80% lifestyle similarity and 20% model
-probability. With insufficient training data, ranking uses lifestyle alone.
+The model is a **logistic regression** that predicts whether a match will
+succeed — whether both sides accept — from the normalized absolute differences
+between the eight seeker and WG lifestyle sliders. It trains on **real match
+outcomes** (accepted = 1, declined = 0), not a survey. Evaluation uses repeated
+held-out-seeker cross-validation and reports accuracy against a majority
+baseline, balanced accuracy, ROC AUC, and Brier score, then refits on all
+resolved matches. Its learned coefficients become a weight per lifestyle factor,
+which weight the compatibility score so ranking learns which factors matter
+instead of treating all eight equally. Seed outcomes are synthetic; demo metrics
+do not establish performance on real tenants. When a trained model is available,
+ranking combines 80% lifestyle similarity and 20% match probability; with
+insufficient data it uses equal-weight lifestyle similarity alone.
 
 Train or refresh the model in **Insights**, or run:
 
@@ -110,7 +115,7 @@ python -m unittest discover -s tests -v
 
 Tests use temporary databases, models, and uploads. They cover registration
 through profile setup, role switching, saved listing edits, mutual swipes,
-chat, offers, acceptance, feedback, and model training. Transport responses
+chat, offers, acceptance, match outcomes, and model training. Transport responses
 and failures are mocked so the suite works offline.
 
 Database and model paths resolve relative to the project, regardless of the
@@ -134,14 +139,14 @@ group-project/
 │   ├── search_criteria.py   seekers: max rent, move-in date, travel time …
 │   ├── wg_listing.py        providers: create / edit the WG listing
 │   ├── swipe.py             one card at a time, sorted by match score
-│   ├── matches.py           matches, chat, viewing, offer, feedback
+│   ├── matches.py           matches, chat, viewing, offer, acceptance
 │   └── insights.py          charts + ML output
 ├── core/              app logic (plain Python, no Streamlit code)
 │   ├── config.py      shared names & choice lists – change sliders/lists HERE
 │   ├── database.py    SQLite tables + all read/write functions
 │   ├── auth.py        registration, login, password hashing
 │   ├── matching.py    hard filters, compatibility score, ranking
-│   ├── ml_model.py    random forest training, evaluation, and prediction
+│   ├── ml_model.py    logistic-regression training, evaluation, learned weights
 │   ├── transport_api.py   travel time to HSG (transport.opendata.ch)
 │   └── uploads.py     validation and resizing for uploaded photos
 ├── components/        reusable page pieces
@@ -149,10 +154,10 @@ group-project/
 │   ├── forms.py       saved defaults for editable forms
 │   ├── cards.py       WG card / seeker card
 │   ├── chat.py        chat bubbles, conversation headers, and local timestamps
-│   └── charts.py      radar chart, score gauge, rent per district, map
+│   └── charts.py      radar chart, score gauge, rent vs travel time, map
 ├── data/
 │   ├── database_example.py  small in-memory SQLite example for all nine tables
-│   ├── seed_data.py   creates fake users, WGs, swipes and feedback
+│   ├── seed_data.py   creates fake users, WGs, swipes and resolved matches
 │   └── wg_match.db    the database (created automatically, not on GitHub)
 ├── docs/
 │   ├── database_schema.md      overview of all database tables

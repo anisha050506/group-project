@@ -24,9 +24,8 @@ users ──< wg_members >── wgs
   ├── search_criteria      │
   │                        │
   └──────< swipes >────────┤
-  └──────< matches >───────┘
+  └──────< matches >───────┘   → resolved matches (accepted/declined) = ML labels
                └──< messages
-  feedback (seeker_id, wg_id, satisfied)  → ML training data
 ```
 
 | Table | One row = | Key columns |
@@ -39,17 +38,19 @@ users ──< wg_members >── wgs
 | `matches` | both sides liked each other | match_id, seeker_id, wg_id, status, viewing_done |
 | `messages` | one chat message | match_id, sender_id, text |
 | `conversation_reads` | one participant's saved read position in a chat | match_id, user_id, last_read_message_id |
-| `feedback` | "was the match good?" | seeker_id, wg_id, satisfied (0/1) |
+| `feedback` | legacy table, no longer used (the ML model now learns from match outcomes) | seeker_id, wg_id, satisfied (0/1) |
 
 ## The 8 behavioural sliders (0–10)
 `tidiness`, `sociability`, `noise_tolerance`, `guests`, `sleep_rhythm`, `cooking_together`, `cleaning_schedule`, `time_at_home`. They're defined once in `core/config.py → SLIDERS`.
 
 A **WG's lifestyle profile** is the average of its members' sliders (`database.get_wg_lifestyle_profile`).
 
-`database.get_training_data()` returns one pandas DataFrame row per feedback
-entry: `feedback_id`, `seeker_id`, `wg_id`, `seeker_<slider>` and `wg_<slider>`
-for each slider, and `satisfied`. WG sliders are current member averages;
-missing values remain missing.
+`database.get_training_data()` returns one pandas DataFrame row per **resolved
+match** (status `accepted` or `declined`): `match_id`, `seeker_id`, `wg_id`,
+`seeker_<slider>` and `wg_<slider>` for each slider, and `matched` (1 when
+accepted, 0 when declined). WG sliders are current member averages; missing
+values remain missing. This is the label the logistic-regression model learns
+from (see `core/ml_model.py`).
 
 ## Match workflow
 
@@ -62,11 +63,12 @@ WG members can record a viewing with `mark_viewing_done`. The main tenant
 can then offer the room through `change_match_status`; only that match's
 seeker can accept. Acceptance reserves the room, makes its listing inactive,
 and declines competing open/offered matches for both the WG and seeker in
-one transaction. The accepted match remains accessible for chat and feedback.
+one transaction. The accepted match remains accessible for chat.
 
-`save_match_feedback` permits one feedback submission per accepted match,
-from its seeker. The lower-level `save_feedback` remains available to seed
-training examples, which may include repeated seeker/WG pairs.
+The outcome of each match (`accepted` vs `declined`) is the training signal for
+the recommendation model, so no separate satisfaction survey is collected. (The
+`feedback` table and `save_match_feedback` / `save_feedback` helpers remain in
+the code but are unused.)
 
 ## Live conversations
 
