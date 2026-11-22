@@ -59,8 +59,8 @@ else:
     st.info("Your first mutual match will unlock this comparison.")
 
 st.subheader("How the prediction model performs")
-st.write("A random forest learns from the eight lifestyle differences and satisfaction feedback. Evaluation holds out entire seekers, then the final model is trained on all available feedback.")
-st.caption("The supplied demo feedback is synthetic. These metrics describe the demo dataset and do not establish performance with real tenants.")
+st.write("A logistic regression learns, from real match outcomes, how much a gap in each of the eight lifestyle factors lowers the chance that both sides accept. Evaluation holds out entire seekers, then the final model is trained on all resolved matches.")
+st.caption("Demo outcomes are generated from the seed data. These metrics describe the demo dataset and do not establish performance with real tenants.")
 if st.button("Train / refresh model", type="primary"):
     try:
         with st.spinner("Training and evaluating…"):
@@ -76,6 +76,17 @@ try:
     auc_col.metric("ROC AUC", f"{metrics['roc_auc']:.3f}")
     st.caption(f"{metrics['training_rows']} training rows · {metrics['test_rows']} evaluation rows from {metrics['held_out_seekers']} held-out seekers · Trained {metrics['trained_at']}")
     st.write(f"Balanced accuracy: {metrics['balanced_accuracy']:.1%}. Brier score: {metrics['brier_score']:.3f} (lower is better).")
-    st.caption("When available, candidate ranking combines 80% lifestyle compatibility with 20% estimated satisfaction. Refresh the model after collecting more feedback.")
+    st.caption("When available, candidate ranking combines 80% lifestyle compatibility with 20% match probability, and the learned factor weights sharpen the compatibility score. Refresh the model as more matches are resolved.")
+    weights = ml_model.get_learned_weights()
+    if weights:
+        import pandas as _pd
+        from core.config import SLIDERS as _SLIDERS
+        st.caption("Learned importance of each lifestyle factor (1.0 = average):")
+        order = sorted(weights, key=weights.get, reverse=True)
+        st.dataframe(
+            _pd.DataFrame({"factor": [_SLIDERS[k]["label"] for k in order],
+                           "weight": [round(weights[k], 2) for k in order]}),
+            hide_index=True, width="stretch",
+        )
 except (ValueError, OSError) as exc:
     st.info(str(exc))

@@ -13,8 +13,8 @@ WHAT IT CREATES
     - 60 seekers (role "search_wg") with profile, sliders and search criteria
     - 25 WGs in St. Gallen districts, each with 1–3 members (role "offer_wg")
     - random likes / passes from both sides + the resulting matches
-    - 300 feedback rows for the ML model: the more similar seeker and WG
-      are, the more likely "satisfied = 1" (plus some randomness)
+    - each match resolved to accepted / declined (the ML training labels):
+      the more similar seeker and WG are, the likelier "accepted" (plus noise)
     - the demo users from our use cases (password for ALL users: demo1234)
         Ana   ana.demo@student.unisg.ch    seeker, exchange student from Porto
         Jonas jonas.demo@student.unisg.ch  main tenant of a WG in Rotmonten
@@ -336,7 +336,7 @@ def main() -> None:
         # --- 4. Swipes and matches --------------------------------------------------
         profiles = {wg_id: wg_profile(conn, wg_id) for wg_id in wg_ids}
         for seeker_id, sliders in seekers.items():
-            for wg_id in random.sample(wg_ids, k=8):
+            for wg_id in random.sample(wg_ids, k=12):
                 fit = similarity(sliders, profiles[wg_id])
                 seeker_likes = random.random() < fit
                 insert(conn, "swipes", {"seeker_id": seeker_id, "wg_id": wg_id, "swiped_by": "seeker",
@@ -348,21 +348,28 @@ def main() -> None:
                     if wg_likes:
                         insert(conn, "matches", {"seeker_id": seeker_id, "wg_id": wg_id})
 
-        # --- 5. Feedback = training data for the ML model ----------------------------
-        seeker_ids = list(seekers)
-        for _ in range(NUM_FEEDBACK):
-            seeker_id, wg_id = random.choice(seeker_ids), random.choice(wg_ids)
-            fit = similarity(seekers[seeker_id], profiles[wg_id])
-            probability = max(0.05, min(0.95, (fit - 0.5) * 2))  # similar -> happy, with noise
-            insert(conn, "feedback", {"seeker_id": seeker_id, "wg_id": wg_id,
-                                      "satisfied": int(random.random() < probability)})
+        # --- 5. Resolve matches into real outcomes (the ML training labels) ---------
+        # Each match is viewed, then either accepted (both sides said yes) or
+        # declined. More similar seeker/WG pairs are likelier to be accepted, so
+        # the model can learn which lifestyle factors drive a successful match.
+        # Each match is resolved independently (clean training labels).
+        for match in conn.execute("SELECT match_id, seeker_id, wg_id FROM matches").fetchall():
+            fit = similarity(seekers[match["seeker_id"]], profiles[match["wg_id"]])
+            conn.execute("UPDATE matches SET viewing_done = 1 WHERE match_id = ?", (match["match_id"],))
+            accept_probability = max(0.05, min(0.95, 0.5 + (fit - 0.69) * 4.0))  # similar -> accepted, with noise
+            status = "accepted" if random.random() < accept_probability else "declined"
+            conn.execute("UPDATE matches SET status = ? WHERE match_id = ?", (status, match["match_id"]))
 
     # --- Summary -------------------------------------------------------------------
     # AI-generated: OpenAI Codex, 19.11.2026. Close the summary connection too.
     with closing(database.get_connection()) as conn:
-        for table in ["users", "search_criteria", "wgs", "wg_members", "swipes", "matches", "feedback"]:
+        for table in ["users", "search_criteria", "wgs", "wg_members", "swipes", "matches"]:
             count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
             print(f"{table:<16} {count:>4} rows")
+        resolved = conn.execute(
+            "SELECT status, COUNT(*) FROM matches WHERE status IN ('accepted','declined') GROUP BY status"
+        ).fetchall()
+        print("  resolved matches (ML labels): " + ", ".join(f"{s}={c}" for s, c in resolved))
     print(f"\nDone. Log in with e.g. ana.demo@student.unisg.ch / {DEMO_PASSWORD}")
 
 

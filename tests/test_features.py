@@ -314,8 +314,9 @@ class ModelAndPhotoTests(FeatureFixture):
         with contextlib.redirect_stdout(io.StringIO()):
             seed_data.main()
         metrics = ml_model.train_model()
-        self.assertEqual(metrics["feedback_rows"], 300)
-        self.assertEqual(metrics["training_rows"] + metrics["test_rows"], 300)
+        self.assertEqual(metrics["sample_rows"], len(database.get_training_data()))
+        self.assertGreater(metrics["training_rows"], 0)
+        self.assertGreater(metrics["test_rows"], 0)
         self.assertGreater(metrics["held_out_seekers"], 0)
         self.assertTrue(Path(ml_model.MODEL_PATH).exists())
         ml_model._read_bundle.cache_clear()
@@ -567,7 +568,7 @@ class AppFlowTests(FeatureFixture):
         self.assertEqual(wg["latitude"], 47.42)
         self.assertEqual(wg["is_verified"], 1)
 
-    def test_swipe_match_chat_viewing_offer_accept_and_feedback(self):
+    def test_swipe_match_chat_viewing_offer_and_accept(self):
         seeker_app = self.app()
         self.click(seeker_app, "Like")
         owner_app = self.app("jonas@student.unisg.ch")
@@ -582,8 +583,7 @@ class AppFlowTests(FeatureFixture):
         self.no_errors(seeker_app)
         self.click(seeker_app, "Accept room")
         self.assertEqual(database.get_wg(self.wg)["is_active"], 0)
-        self.click(seeker_app, "Save feedback")
-        self.assertTrue(database.has_match_feedback(self.seeker, self.wg))
+        self.assertEqual(database.get_matches_for_user(self.seeker)[0]["status"], "accepted")
         self.assertEqual(len(database.get_messages(database.get_matches_for_user(self.seeker)[0]["match_id"])), 1)
 
     def test_insights_charts_and_model_training(self):
@@ -596,7 +596,7 @@ class AppFlowTests(FeatureFixture):
         # Market charts: the map and the rent-vs-travel scatter.
         self.assertGreaterEqual(len(app.get("plotly_chart")), 2)
         self.click(app, "Train / refresh model")
-        self.assertEqual(ml_model.get_model_metrics()["feedback_rows"], 300)
+        self.assertGreater(ml_model.get_model_metrics()["sample_rows"], 0)
 
 
 if __name__ == "__main__":

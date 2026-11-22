@@ -613,10 +613,12 @@ def save_feedback(seeker_id: int, wg_id: int, satisfied: bool, comment: str = ""
 
 
 def get_training_data() -> pd.DataFrame:
-    """One row per feedback with seeker_<slider>, wg_<slider>, and satisfied.
+    """One row per resolved match with seeker_<slider>, wg_<slider>, and matched.
 
-    WG values are current member averages. Missing sliders stay missing;
-    the model can decide how to handle incomplete profiles.
+    The label is the real outcome of a match: matched = 1 when both sides
+    accepted (status 'accepted'), 0 when it was declined. Only resolved matches
+    (accepted or declined) are included; open and offered matches are still
+    undecided. WG values are current member averages; missing sliders stay NaN.
     """
     averages = ", ".join(f"AVG(u.{key}) AS {key}" for key in SLIDER_KEYS)
     features = ", ".join(
@@ -628,11 +630,13 @@ def get_training_data() -> pd.DataFrame:
             FROM wg_members member JOIN users u ON u.user_id = member.user_id
             GROUP BY member.wg_id
         )
-        SELECT f.feedback_id, f.seeker_id, f.wg_id, {features}, f.satisfied
-        FROM feedback f
-        JOIN users seeker ON seeker.user_id = f.seeker_id
-        LEFT JOIN wg_profiles profile ON profile.wg_id = f.wg_id
-        ORDER BY f.feedback_id
+        SELECT m.match_id, m.seeker_id, m.wg_id, {features},
+               CASE WHEN m.status = 'accepted' THEN 1 ELSE 0 END AS matched
+        FROM matches m
+        JOIN users seeker ON seeker.user_id = m.seeker_id
+        LEFT JOIN wg_profiles profile ON profile.wg_id = m.wg_id
+        WHERE m.status IN ('accepted', 'declined')
+        ORDER BY m.match_id
     """
     with closing(get_connection()) as conn:
         return pd.read_sql_query(sql, conn)

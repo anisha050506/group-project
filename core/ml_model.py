@@ -13,8 +13,8 @@ from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, brier_score_loss, roc_auc_score
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.pipeline import make_pipeline
@@ -33,47 +33,74 @@ def build_features(seeker: dict, wg_profile: dict) -> list[float]:
 
 
 def _new_model():
+    # Logistic regression: one coefficient per lifestyle factor, so the model is
+    # interpretable and its learned weights can feed the compatibility score.
     return make_pipeline(
         SimpleImputer(strategy="constant", fill_value=0.5),
-        RandomForestClassifier(n_estimators=150, min_samples_leaf=5, random_state=42, class_weight="balanced", n_jobs=1),
+        LogisticRegression(max_iter=1000, class_weight="balanced", random_state=42),
     )
+
+
+def learned_weights_from(model) -> dict:
+    """Turn the logistic-regression coefficients into one positive importance
+    per lifestyle factor, normalised so the average weight is 1.0 (the neutral
+    all-equal baseline). A bigger weight means a gap in that factor matters more.
+    """
+    coefficients = model.named_steps["logisticregression"].coef_[0]
+    importance = np.abs(coefficients)
+    average = importance.mean() or 1.0
+    return {key: float(importance[i] / average) for i, key in enumerate(SLIDER_KEYS)}
 
 
 def train_model() -> dict:
     """Evaluate on held-out seekers, refit on all feedback, save locally."""
     data = database.get_training_data()
-    data = data[data["satisfied"].isin([0, 1])]
-    if len(data) < 20 or data["satisfied"].nunique() < 2 or data["seeker_id"].nunique() < 5:
-        raise ValueError("Training needs at least 20 feedback rows, both outcomes, and 5 different seekers.")
+    data = data[data["matched"].isin([0, 1])]
+    if len(data) < 20 or data["matched"].nunique() < 2 or data["seeker_id"].nunique() < 5:
+        raise ValueError("Training needs at least 20 resolved matches, both outcomes, and 5 different seekers.")
     features = np.array([
         build_features(
             {key: row[f"seeker_{key}"] for key in SLIDER_KEYS},
             {key: row[f"wg_{key}"] for key in SLIDER_KEYS},
         ) for _, row in data.iterrows()
     ])
-    labels = data["satisfied"].to_numpy(dtype=int)
-    splitter = GroupShuffleSplit(n_splits=30, test_size=0.2, random_state=42)
-    split = next(((a, b) for a, b in splitter.split(features, labels, data["seeker_id"])
-                  if len(set(labels[a])) == 2 and len(set(labels[b])) == 2), None)
-    if split is None:
-        raise ValueError("More feedback from different seekers is needed for a balanced evaluation split.")
-    train_ids, test_ids = split
-    evaluation_model = _new_model().fit(features[train_ids], labels[train_ids])
-    predictions = evaluation_model.predict(features[test_ids])
-    probability = evaluation_model.predict_proba(features[test_ids])[:, list(evaluation_model.classes_).index(1)]
+    labels = data["matched"].to_numpy(dtype=int)
+    # Repeated held-out-seeker cross-validation: average the scores over many
+    # splits so the reported numbers are stable, not an accident of one split.
+    splitter = GroupShuffleSplit(n_splits=25, test_size=0.2, random_state=42)
+    folds = []
+    for train_ids, test_ids in splitter.split(features, labels, data["seeker_id"]):
+        if len(set(labels[train_ids])) < 2 or len(set(labels[test_ids])) < 2:
+            continue
+        model = _new_model().fit(features[train_ids], labels[train_ids])
+        predictions = model.predict(features[test_ids])
+        probability = model.predict_proba(features[test_ids])[:, list(model.classes_).index(1)]
+        baseline = int(np.mean(labels[train_ids]) >= 0.5)
+        folds.append({
+            "accuracy": accuracy_score(labels[test_ids], predictions),
+            "balanced_accuracy": balanced_accuracy_score(labels[test_ids], predictions),
+            "roc_auc": roc_auc_score(labels[test_ids], probability),
+            "brier_score": brier_score_loss(labels[test_ids], probability),
+            "baseline_accuracy": accuracy_score(labels[test_ids], np.full(len(test_ids), baseline)),
+            "test_rows": len(test_ids),
+            "held_out_seekers": data.iloc[test_ids]["seeker_id"].nunique(),
+        })
+    if not folds:
+        raise ValueError("More matches from different seekers are needed for a balanced evaluation.")
+    mean = lambda key: float(np.mean([fold[key] for fold in folds]))
     metrics = {
-        "accuracy": float(accuracy_score(labels[test_ids], predictions)),
-        "balanced_accuracy": float(balanced_accuracy_score(labels[test_ids], predictions)),
-        "roc_auc": float(roc_auc_score(labels[test_ids], probability)),
-        "brier_score": float(brier_score_loss(labels[test_ids], probability)),
-        "baseline_accuracy": float(accuracy_score(labels[test_ids], np.full(len(test_ids), int(np.mean(labels[train_ids]) >= 0.5)))),
-        "training_rows": int(len(train_ids)), "test_rows": int(len(test_ids)),
-        "feedback_rows": int(len(data)), "held_out_seekers": int(data.iloc[test_ids]["seeker_id"].nunique()),
-        "trained_at": datetime.now(timezone.utc).isoformat(),
+        "accuracy": mean("accuracy"), "balanced_accuracy": mean("balanced_accuracy"),
+        "roc_auc": mean("roc_auc"), "brier_score": mean("brier_score"),
+        "baseline_accuracy": mean("baseline_accuracy"),
+        "training_rows": int(len(labels) - mean("test_rows")), "test_rows": int(round(mean("test_rows"))),
+        "sample_rows": int(len(data)), "held_out_seekers": int(round(mean("held_out_seekers"))),
+        "cv_folds": len(folds), "trained_at": datetime.now(timezone.utc).isoformat(),
     }
+    final_model = _new_model().fit(features, labels)
     bundle = {
         "version": 1, "slider_keys": SLIDER_KEYS, "database": str(Path(database.DB_PATH).resolve()),
-        "model": _new_model().fit(features, labels), "metrics": metrics,
+        "model": final_model, "metrics": metrics,
+        "weights": learned_weights_from(final_model),
     }
     target = Path(MODEL_PATH)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -118,6 +145,15 @@ def load_model():
 
 def get_model_metrics() -> dict:
     return _load_bundle()["metrics"]
+
+
+def get_learned_weights() -> dict | None:
+    """The per-factor weights the model learned, or None when no usable model
+    exists yet (so ranking can fall back to equal weights)."""
+    try:
+        return _load_bundle().get("weights")
+    except (ValueError, OSError):
+        return None
 
 
 def predict_match_probability(seeker: dict, wg_profile: dict, model=None) -> float:

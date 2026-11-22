@@ -54,13 +54,19 @@ def passes_hard_filters(seeker: dict, criteria: dict, wg: dict) -> bool:
     return not hard_filter_reasons(seeker, criteria, wg)
 
 
-def compatibility_score(profile_a: dict, profile_b: dict) -> float:
-    """Weighted similarity from 0 to 100, using shared answered sliders."""
+def compatibility_score(profile_a: dict, profile_b: dict, weights: dict | None = None) -> float:
+    """Weighted similarity from 0 to 100, using shared answered sliders.
+
+    `weights` sets how much each lifestyle factor counts; it defaults to the
+    neutral MATCH_WEIGHTS (all equal). Ranking passes the weights the model
+    learned from real matches so important factors count for more.
+    """
+    weights = weights or MATCH_WEIGHTS
     total, weight = 0.0, 0.0
     for key in SLIDER_KEYS:
         a, b = profile_a.get(key), profile_b.get(key)
         if a is not None and b is not None and math.isfinite(a) and math.isfinite(b):
-            w = max(0, MATCH_WEIGHTS.get(key, 1.0))
+            w = max(0, weights.get(key, 1.0))
             total += abs(a - b) * w
             weight += w
     if not weight:
@@ -78,8 +84,8 @@ def biggest_mismatches(profile_a: dict, profile_b: dict, top_n: int = 2) -> list
     ]
 
 
-def _score_candidate(candidate: dict, seeker: dict, profile: dict, model) -> dict:
-    score = compatibility_score(seeker, profile)
+def _score_candidate(candidate: dict, seeker: dict, profile: dict, model, weights: dict | None = None) -> dict:
+    score = compatibility_score(seeker, profile, weights)
     candidate["lifestyle_score"] = score
     candidate["ml_probability"] = None
     if model is not None:
@@ -106,7 +112,7 @@ def rank_wgs_for_seeker(seeker_id: int) -> list[dict]:
     if any(match["seeker_id"] == seeker_id and match["status"] == "accepted" for match in database.get_matches_for_user(seeker_id)):
         return []
     swiped = set(database.get_swiped_wg_ids(seeker_id))
-    model, candidates = _available_model(), []
+    model, weights, candidates = _available_model(), ml_model.get_learned_weights(), []
     for wg in database.get_all_active_wgs():
         if wg["wg_id"] in swiped:
             continue
@@ -117,7 +123,7 @@ def rank_wgs_for_seeker(seeker_id: int) -> list[dict]:
             continue
         profile = database.get_wg_lifestyle_profile(wg["wg_id"])
         if profile_is_complete(profile):
-            candidates.append(_score_candidate(wg, seeker, profile, model))
+            candidates.append(_score_candidate(wg, seeker, profile, model, weights))
     return sorted(candidates, key=lambda row: (-row["score"], row["wg_id"]))
 
 
@@ -131,7 +137,7 @@ def rank_seekers_for_wg(wg_id: int) -> list[dict]:
     wg["members"] = database.get_wg_members(wg_id)
     member_ids = {member["user_id"] for member in wg["members"]}
     swiped = set(database.get_swiped_seeker_ids(wg_id))
-    model, candidates = _available_model(), []
+    model, weights, candidates = _available_model(), ml_model.get_learned_weights(), []
     # Either side can initiate; only this WG's own votes remove a seeker here.
     for seeker in database.get_all_seekers():
         if seeker["user_id"] in swiped or seeker["user_id"] in member_ids:
@@ -140,7 +146,7 @@ def rank_seekers_for_wg(wg_id: int) -> list[dict]:
         if any(match["seeker_id"] == seeker["user_id"] and match["status"] == "accepted" for match in database.get_matches_for_user(seeker["user_id"])):
             continue
         if criteria and seeker["is_verified"] and profile_is_complete(seeker) and passes_hard_filters(seeker, criteria, wg):
-            candidates.append(_score_candidate(seeker, seeker, profile, model))
+            candidates.append(_score_candidate(seeker, seeker, profile, model, weights))
     return sorted(candidates, key=lambda row: (-row["score"], row["user_id"]))
 
 

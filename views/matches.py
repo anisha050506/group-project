@@ -53,21 +53,7 @@ def match_details(match: dict, user_id: int) -> None:
         except ValueError as exc:
             st.error(str(exc))
     if is_seeker and match["status"] == "accepted":
-        with st.expander("How is living together?"):
-            st.caption("After living together, share feedback to help improve matching.")
-            if database.has_match_feedback(user_id, match["wg_id"]):
-                st.success("Thank you. Your feedback has been recorded.")
-            else:
-                with st.form(f"feedback_{selected}"):
-                    satisfied = st.radio("Are you happy with this match?", [True, False], format_func=lambda value: "Yes" if value else "No")
-                    comment = st.text_area("Comment (optional)", max_chars=2000)
-                    submit = st.form_submit_button("Save feedback")
-                if submit:
-                    try:
-                        database.save_match_feedback(selected, user_id, satisfied, comment)
-                        st.rerun()
-                    except ValueError as exc:
-                        st.error(str(exc))
+        st.success("You accepted this room. The outcome of your matches trains the recommendation model.")
 
 
 @st.fragment(run_every="2s")

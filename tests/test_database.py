@@ -127,25 +127,31 @@ class DatabaseTests(unittest.TestCase):
         self.assertEqual([row["text"] for row in messages], ["Can I visit?", "Yes, Saturday!"])
         self.assertEqual(messages[1]["sender_name"], "Mia")
 
-    def test_training_data_has_one_row_per_feedback_and_correct_averages(self):
+    def test_training_data_has_one_row_per_resolved_match_and_correct_averages(self):
         empty = database.get_training_data()
         self.assertTrue(empty.empty)
-        self.assertIn("satisfied", empty.columns)
+        self.assertIn("matched", empty.columns)
         database.update_profile(self.seeker, {key: 7 for key in SLIDER_KEYS})
         database.update_profile(self.owner, {key: 4 for key in SLIDER_KEYS})
         database.update_profile(self.member, {key: 8 for key in SLIDER_KEYS})
-        database.save_feedback(self.seeker, self.wg, True, "Good fit")
-        database.save_feedback(self.seeker, self.wg, False)
+        # self.wg members: owner (4) + member (8) -> average 6.0; a second WG has owner only -> 4.0.
+        wg2 = database.create_wg({"title": "WG2", "is_verified": 1}, self.owner)
+        with contextlib.closing(database.get_connection()) as conn, conn:
+            conn.execute("INSERT INTO matches (seeker_id, wg_id, status) VALUES (?, ?, 'accepted')", (self.seeker, self.wg))
+            conn.execute("INSERT INTO matches (seeker_id, wg_id, status) VALUES (?, ?, 'declined')", (self.seeker, wg2))
+            # An open match is still undecided and must not appear as training data.
+            conn.execute("INSERT INTO matches (seeker_id, wg_id, status) VALUES (?, ?, 'open')", (self.member, self.wg))
         training = database.get_training_data()
         self.assertEqual(len(training), 2)
-        self.assertEqual(training["satisfied"].tolist(), [1, 0])
+        self.assertEqual(training["matched"].tolist(), [1, 0])  # accepted first (lower match_id), then declined
         for key in SLIDER_KEYS:
             self.assertEqual(training[f"seeker_{key}"].tolist(), [7, 7])
-            self.assertEqual(training[f"wg_{key}"].tolist(), [6.0, 6.0])
+            self.assertEqual(training[f"wg_{key}"].tolist(), [6.0, 4.0])
+        # A WG with no members has unknown (NaN) lifestyle averages.
         empty_wg = database.create_wg({}, self.owner)
         with contextlib.closing(database.get_connection()) as conn, conn:
             conn.execute("DELETE FROM wg_members WHERE wg_id = ?", (empty_wg,))
-        database.save_feedback(self.seeker, empty_wg, False)
+            conn.execute("INSERT INTO matches (seeker_id, wg_id, status) VALUES (?, ?, 'declined')", (self.seeker, empty_wg))
         self.assertTrue(database.get_training_data()["wg_tidiness"].isna().iloc[-1])
 
     def test_existing_seed_script_and_repeated_initialization(self):
@@ -156,8 +162,11 @@ class DatabaseTests(unittest.TestCase):
         database.init_db()
         # 60 random seekers + Ana (demo) + 8 named test seekers (test_accounts.txt)
         self.assertEqual(len(database.get_all_seekers()), 69)
-        self.assertEqual(len(database.get_training_data()), 300)
-        self.assertFalse(database.get_training_data().isna().any().any())
+        # Training data = resolved matches (accepted/declined), with both outcomes present.
+        training = database.get_training_data()
+        self.assertGreater(len(training), 50)
+        self.assertEqual(sorted(training["matched"].unique().tolist()), [0, 1])
+        self.assertFalse(training.isna().any().any())
         with contextlib.closing(database.get_connection()) as conn:
             self.assertEqual(conn.execute("PRAGMA foreign_key_check").fetchall(), [])
             self.assertEqual(conn.execute("PRAGMA integrity_check").fetchone()[0], "ok")
