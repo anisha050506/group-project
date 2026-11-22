@@ -46,7 +46,6 @@ from core.config import (
 RANDOM_SEED = 42
 NUM_SEEKERS = 60
 NUM_WGS = 25
-NUM_FEEDBACK = 300
 DEMO_PASSWORD = "demo1234"
 
 FIRST_NAMES = [

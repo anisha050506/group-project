@@ -4,7 +4,7 @@ Owner: Person B. The source of truth is `SCHEMA` in `core/database.py`. Update t
 
 For a small in-memory database in the `sqlite3` / `pandas` /
 `DB.executescript(...)` format, run `python -m data.database_example`.
-It creates all nine tables using the shared schema and inserts related sample
+It creates all eight tables using the shared schema and inserts related sample
 rows into every table. Use it from Python like this:
 
 ```python
@@ -38,7 +38,6 @@ users ──< wg_members >── wgs
 | `matches` | both sides liked each other | match_id, seeker_id, wg_id, status, viewing_done |
 | `messages` | one chat message | match_id, sender_id, text |
 | `conversation_reads` | one participant's saved read position in a chat | match_id, user_id, last_read_message_id |
-| `feedback` | legacy table, no longer used (the ML model now learns from match outcomes) | seeker_id, wg_id, satisfied (0/1) |
 
 ## The 8 behavioural sliders (0–10)
 `tidiness`, `sociability`, `noise_tolerance`, `guests`, `sleep_rhythm`, `cooking_together`, `cleaning_schedule`, `time_at_home`. They're defined once in `core/config.py → SLIDERS`.
@@ -66,9 +65,7 @@ and declines competing open/offered matches for both the WG and seeker in
 one transaction. The accepted match remains accessible for chat.
 
 The outcome of each match (`accepted` vs `declined`) is the training signal for
-the recommendation model, so no separate satisfaction survey is collected. (The
-`feedback` table and `save_match_feedback` / `save_feedback` helpers remain in
-the code but are unused.)
+the recommendation model, so no separate satisfaction survey is collected.
 
 ## Live conversations
 

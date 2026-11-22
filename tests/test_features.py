@@ -260,20 +260,15 @@ class WorkflowTests(FeatureFixture):
             database.change_match_status(other_match, other, "accepted")
         self.assertEqual(matching.rank_wgs_for_seeker(self.seeker), [])
 
-    def test_feedback_permissions_and_duplicate_prevention(self):
+    def test_accepted_match_is_training_data_and_member_removal(self):
         match_id = self.new_match()
-        with self.assertRaises(ValueError):
-            database.save_match_feedback(match_id, self.seeker, True)
         database.mark_viewing_done(match_id, self.owner)
         database.change_match_status(match_id, self.owner, "offered")
         database.change_match_status(match_id, self.seeker, "accepted")
-        with self.assertRaises(ValueError):
-            database.save_match_feedback(match_id, self.owner, True)
-        database.save_match_feedback(match_id, self.seeker, True, " Happy together ")
-        self.assertTrue(database.has_match_feedback(self.seeker, self.wg))
-        with self.assertRaises(ValueError):
-            database.save_match_feedback(match_id, self.seeker, False)
-        self.assertEqual(len(database.get_training_data()), 1)
+        # An accepted match is one positive (matched = 1) training row.
+        training = database.get_training_data()
+        self.assertEqual(len(training), 1)
+        self.assertEqual(training["matched"].iloc[0], 1)
         with self.assertRaises(ValueError):
             database.send_message(match_id, self.seeker, "  ")
         with self.assertRaises(ValueError):
@@ -327,7 +322,7 @@ class ModelAndPhotoTests(FeatureFixture):
         self.assertEqual(ml_model.get_model_metrics(), metrics)
         self.assertIsNotNone(matching.rank_wgs_for_seeker(user["user_id"])[0]["ml_probability"])
 
-    def test_model_without_feedback_and_corrupt_model(self):
+    def test_model_without_training_data_and_corrupt_model(self):
         with self.assertRaises(ValueError):
             ml_model.train_model()
         Path(ml_model.MODEL_PATH).write_bytes(b"broken model")

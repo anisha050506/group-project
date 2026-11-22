@@ -45,7 +45,7 @@ streamlit run app.py
 
 All required libraries are listed in `requirements.txt`.
 
-To try a small in-memory database with SQL inserts for all nine tables, run
+To try a small in-memory database with SQL inserts for all eight tables, run
 `python -m data.database_example`. It uses `sqlite3`, `pandas`, and
 `DB.executescript(...)` and leaves the saved app database untouched.
 
@@ -156,7 +156,7 @@ group-project/
 │   ├── chat.py        chat bubbles, conversation headers, and local timestamps
 │   └── charts.py      radar chart, score gauge, rent vs travel time, map
 ├── data/
-│   ├── database_example.py  small in-memory SQLite example for all nine tables
+│   ├── database_example.py  small in-memory SQLite example for all eight tables
 │   ├── seed_data.py   creates fake users, WGs, swipes and resolved matches
 │   └── wg_match.db    the database (created automatically, not on GitHub)
 ├── docs/

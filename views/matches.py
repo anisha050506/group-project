@@ -1,4 +1,4 @@
-"""Live inbox, conversations, viewings, room offers, and satisfaction feedback."""
+"""Live inbox, conversations, viewings, room offers, and acceptance."""
 # AI-generated: OpenAI Codex, 19.11.2026. Prompt: make conversations async and organize chats like WhatsApp.
 import re
 

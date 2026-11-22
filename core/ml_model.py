@@ -56,7 +56,7 @@ def learned_weights_from(model) -> dict:
 
 
 def train_model() -> dict:
-    """Evaluate on held-out seekers, refit on all feedback, save locally."""
+    """Evaluate on held-out seekers, refit on all resolved matches, save locally."""
     data = database.get_training_data()
     data = data[data["matched"].isin([0, 1])]
     if len(data) < 20 or data["matched"].nunique() < 2 or data["seeker_id"].nunique() < 5:
@@ -142,7 +142,7 @@ def _load_bundle():
 
 
 def load_model():
-    """Load a saved model, training first if enough feedback is available."""
+    """Load a saved model, training first if enough match outcomes are available."""
     return _load_bundle()["model"]
 
 

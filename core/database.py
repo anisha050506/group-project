@@ -25,7 +25,8 @@ TABLES (details: docs/database_schema.md)
     matches          created when BOTH sides liked each other
     messages         chat messages inside a match
     conversation_reads  saved read position for each chat participant
-    feedback         "was the match good?" -> training data for the ML model
+
+    A match's accepted/declined outcome is the ML model's training label.
 
 STATUS:   Tables and read/write functions implemented.
 AI NOTE:  Generated with Claude (Anthropic), 15.11.2026 – see docs/ai_usage.md
@@ -139,15 +140,6 @@ CREATE TABLE IF NOT EXISTS messages (
     sender_id  INTEGER REFERENCES users(user_id),
     text       TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS feedback (
-    feedback_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    seeker_id   INTEGER REFERENCES users(user_id),
-    wg_id       INTEGER REFERENCES wgs(wg_id),
-    satisfied   INTEGER,                          -- 1 = good match, 0 = not
-    comment     TEXT,
-    created_at  TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
 -- AI-generated: OpenAI Codex, 19.11.2026. Persist each participant's chat read position.
@@ -500,7 +492,7 @@ def update_match(match_id: int, data: dict) -> None:
 
 
 # =============================================================================
-# Messages & feedback
+# Messages
 # =============================================================================
 # AI-generated: OpenAI Codex, 19.11.2026. Prompt: make conversations async and organize chats like WhatsApp.
 def get_conversations_for_user(user_id: int) -> list[dict]:
@@ -605,15 +597,6 @@ def get_messages(match_id: int) -> list[dict]:
     return [dict(row) for row in rows]
 
 
-def save_feedback(seeker_id: int, wg_id: int, satisfied: bool, comment: str = "") -> None:
-    """Record satisfaction feedback for model training."""
-    with closing(get_connection()) as conn, conn:
-        conn.execute(
-            "INSERT INTO feedback (seeker_id, wg_id, satisfied, comment) VALUES (?, ?, ?, ?)",
-            (seeker_id, wg_id, int(satisfied), comment),
-        )
-
-
 def get_training_data() -> pd.DataFrame:
     """One row per resolved match with seeker_<slider>, wg_<slider>, and matched.
 
@@ -697,34 +680,6 @@ def change_match_status(match_id: int, actor_id: int, status: str) -> None:
         else:
             raise ValueError("Unknown match transition.")
         conn.execute("UPDATE matches SET status = ? WHERE match_id = ?", (status, match_id))
-
-
-def save_match_feedback(match_id: int, actor_id: int, satisfied: bool, comment: str = "") -> None:
-    """One feedback submission per accepted match, by its seeker."""
-    with closing(get_connection()) as conn, conn:
-        conn.execute("BEGIN IMMEDIATE")
-        match = conn.execute(
-            "SELECT * FROM matches WHERE match_id = ? AND seeker_id = ? AND status = 'accepted'",
-            (match_id, actor_id),
-        ).fetchone()
-        if not match:
-            raise ValueError("Only the seeker in an accepted match can leave feedback.")
-        exists = conn.execute(
-            "SELECT 1 FROM feedback WHERE seeker_id = ? AND wg_id = ?", (actor_id, match["wg_id"]),
-        ).fetchone()
-        if exists:
-            raise ValueError("Feedback has already been recorded for this match.")
-        conn.execute(
-            "INSERT INTO feedback (seeker_id, wg_id, satisfied, comment) VALUES (?, ?, ?, ?)",
-            (actor_id, match["wg_id"], int(satisfied), comment.strip()),
-        )
-
-
-def has_match_feedback(seeker_id: int, wg_id: int) -> bool:
-    with closing(get_connection()) as conn:
-        return conn.execute(
-            "SELECT 1 FROM feedback WHERE seeker_id = ? AND wg_id = ?", (seeker_id, wg_id),
-        ).fetchone() is not None
 
 
 def remove_wg_member(wg_id: int, user_id: int, actor_id: int) -> None:

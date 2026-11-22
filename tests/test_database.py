@@ -182,7 +182,7 @@ class ExampleDatabaseTests(unittest.TestCase):
             "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
         )}
         self.assertEqual(tables, {
-            "users", "search_criteria", "wgs", "wg_members", "swipes", "matches", "messages", "feedback", "conversation_reads",
+            "users", "search_criteria", "wgs", "wg_members", "swipes", "matches", "messages", "conversation_reads",
         })
         for table in tables:
             self.assertGreater(DB.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0], 0)

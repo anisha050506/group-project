@@ -61,9 +61,9 @@ with left:
 with right:
     st.plotly_chart(charts.radar_chart(user if is_seeker else profile, profile if is_seeker else candidate, "You" if is_seeker else "Your WG", "WG" if is_seeker else "Seeker"), width="stretch")
     if candidate["ml_probability"] is not None:
-        st.caption(f"Lifestyle: {candidate['lifestyle_score']:.0f}% · Estimated satisfaction: {candidate['ml_probability']:.0%}. Ranking uses 80% lifestyle and 20% model prediction. The demo model uses synthetic feedback.")
+        st.caption(f"Lifestyle: {candidate['lifestyle_score']:.0f}% · Estimated match chance: {candidate['ml_probability']:.0%}. Ranking uses 80% lifestyle and 20% model prediction. The demo model is trained on synthetic match outcomes.")
     else:
-        st.caption("Ranking uses the weighted average of your eight lifestyle differences. Train the model in Insights once enough feedback exists.")
+        st.caption("Ranking uses the weighted average of your eight lifestyle differences. Train the model in Insights once enough matches are resolved.")
 pass_col, like_col = st.columns(2)
 passed = pass_col.button("Pass", icon=":material/close:", width="stretch")
 liked = like_col.button("Like", type="primary", icon=":material/favorite:", width="stretch")

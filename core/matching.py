@@ -101,7 +101,7 @@ def _available_model():
     try:
         return ml_model.load_model()
     except (ValueError, OSError):
-        return None  # New installations can rank by lifestyle without feedback.
+        return None  # New installations can rank by lifestyle without a trained model.
 
 
 def rank_wgs_for_seeker(seeker_id: int) -> list[dict]:
