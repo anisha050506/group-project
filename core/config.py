@@ -1,7 +1,6 @@
 """
 ===============================================================================
 FILE:     core/config.py
-NOTE:     change only after agreeing with the group!
 -------------------------------------------------------------------------------
 PURPOSE
     ONE place for every name and choice list that several files share.
