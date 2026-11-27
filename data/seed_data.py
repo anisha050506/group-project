@@ -200,6 +200,7 @@ def add_photo_wg(conn, today: datetime.date) -> None:
                   "sleep_rhythm": 5, "cooking_together": 8, "cleaning_schedule": 7, "time_at_home": 6},
         gender="female", birth_year=2001, languages="DE,EN", study_level="Master", degree="BWL",
         bio="Master's student. Our Altbau WG is bright and sociable; we cook together most weeks.",
+        photo_path="assets/demo/avatar_elena.jpg",
     )
     wg_id = insert(conn, "wgs", {
         "title": "Sunny Altbau room in a central WG", "address": "Zentrumstrasse 14",
