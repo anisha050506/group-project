@@ -188,6 +188,36 @@ def add_named_test_accounts(conn, today: datetime.date) -> None:
             insert(conn, "wg_members", {"wg_id": wg_id, "user_id": member_id, "is_main_tenant": is_main})
 
 
+def add_photo_wg(conn, today: datetime.date) -> None:
+    """A single demo WG with a real photographed listing (a collage of the
+    living room, kitchen and the room on offer). The image lives in assets/demo/
+    and is referenced by a path relative to the project root, so it loads on any
+    machine and on the deployed app."""
+    lat, lon, minutes = DISTRICT_INFO.get("Zentrum", DEFAULT_DISTRICT_INFO)
+    owner = make_user(
+        conn, auth.hash_password(DEMO_PASSWORD), "offer_wg", "elena.fischer.demo@student.unisg.ch",
+        "Elena", {"tidiness": 7, "sociability": 7, "noise_tolerance": 5, "guests": 5,
+                  "sleep_rhythm": 5, "cooking_together": 8, "cleaning_schedule": 7, "time_at_home": 6},
+        gender="female", birth_year=2001, languages="DE,EN", study_level="Master", degree="BWL",
+        bio="Master's student. Our Altbau WG is bright and sociable; we cook together most weeks.",
+    )
+    wg_id = insert(conn, "wgs", {
+        "title": "Sunny Altbau room in a central WG", "address": "Zentrumstrasse 14",
+        "district": "Zentrum", "postcode": "9000", "latitude": lat, "longitude": lon,
+        "rent_chf": 890, "utilities_chf": 90, "deposit_chf": 1780, "room_size_m2": 18,
+        "flat_size_m2": 108, "num_rooms": 4.0, "num_flatmates": 2, "furnished": 1,
+        "private_bathroom": 0, "balcony": 1, "amenities": "Washing machine,Wi-Fi,Dishwasher",
+        "available_from": (today + datetime.timedelta(days=45)).isoformat(), "min_rental_months": 6,
+        "wg_type": WG_TYPES[-1], "smoking_allowed": SMOKING_OPTIONS[0], "pets_allowed": 0,
+        "preferred_gender": "any", "travel_time_min": minutes,
+        "description": "Bright, high-ceilinged Altbau flat: a spacious living room, an open kitchen "
+                       "with a dining table, and a cosy attic room with a skylight on offer. "
+                       "Central, green and quiet, a short ride to HSG.",
+        "photo_path": "assets/demo/wg_altbau_collage.jpg", "is_verified": 1, "is_active": 1,
+    })
+    insert(conn, "wg_members", {"wg_id": wg_id, "user_id": owner, "is_main_tenant": 1})
+
+
 # =============================================================================
 # Main
 # =============================================================================
@@ -310,6 +340,7 @@ def main() -> None:
 
         # --- 3c. Named test accounts (test_accounts.txt) --------------------------
         add_named_test_accounts(conn, today)
+        add_photo_wg(conn, today)
 
         # --- 4. Swipes and matches --------------------------------------------------
         profiles = {wg_id: wg_profile(conn, wg_id) for wg_id in wg_ids}
