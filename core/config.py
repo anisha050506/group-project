@@ -8,9 +8,6 @@ PURPOSE
         from core.config import SLIDERS, GENDERS
     -> change something here once, and the whole app follows.
 
-WHAT DOES NOT BELONG HERE
-    - functions, database queries, Streamlit code
-
 AI NOTE:  Generated with Claude (Anthropic), 15.11.2026 – see docs/ai_usage.md
 ===============================================================================
 """

@@ -8,26 +8,6 @@ PURPOSE
     their page, the ML model has training data, and the demo video works
     long before real users exist.
 
-WHAT IT CREATES
-    - 60 seekers (role "search_wg") with profile, sliders and search criteria
-    - 25 WGs in St. Gallen districts, each with 1–3 members (role "offer_wg")
-    - random likes / passes from both sides + the resulting matches
-    - each match resolved to accepted / declined (the ML training labels):
-      the more similar seeker and WG are, the likelier "accepted" (plus noise)
-    - the demo users from our use cases (password for ALL users: demo1234)
-        Ana   ana.demo@student.unisg.ch    seeker, exchange student from Porto
-        Jonas jonas.demo@student.unisg.ch  main tenant of a WG in Rotmonten
-        Mia   mia.demo@student.unisg.ch    Jonas's flatmate
-
-NOTES
-    - The script DELETES the existing database first (reset_db).
-    - random.seed(42) -> everyone in the team gets exactly the same data.
-    - It writes with plain SQL, so it already works before the functions in
-      database.py are coded.
-    - Sliders and choice lists come from core/config.py, so the seed data
-      adapts automatically when the group changes them there.
-
-STATUS:   DONE (step 6)
 AI NOTE:  Generated with Claude (Anthropic), 15.11.2026 – see docs/ai_usage.md
 ===============================================================================
 """

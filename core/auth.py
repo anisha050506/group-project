@@ -6,14 +6,6 @@ PURPOSE
     Registration and login logic (no Streamlit code – the forms live in
     views/login.py and views/register.py).
 
-WHAT BELONGS HERE
-    - email validation (only @student.unisg.ch)
-    - password hashing / checking  (passwords are NEVER stored in plain text)
-    - register_user() and login_user(), which use core/database.py
-WHAT DOES NOT BELONG HERE
-    - st.session_state, forms, buttons  (-> views/ and components/layout.py)
-
-STATUS:   Registration and login implemented; email verification is simulated.
 AI NOTE:  Generated with Claude (Anthropic), 15.11.2026 – see docs/ai_usage.md
 ===============================================================================
 """

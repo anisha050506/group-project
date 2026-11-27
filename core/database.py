@@ -7,27 +7,6 @@ PURPOSE
     Pages NEVER write SQL themselves – they call a function from this file,
     e.g.  database.get_user_by_id(5)  or  database.save_swipe(...).
 
-WHAT BELONGS HERE
-    - creating the tables (init_db)
-    - one small function per read/write action ("CRUD": create, read,
-      update, delete), returning plain Python dicts / lists of dicts
-WHAT DOES NOT BELONG HERE
-    - Streamlit code, match-score maths (-> matching.py), password hashing
-      (-> auth.py)
-
-TABLES (details: docs/database_schema.md)
-    users            account + profile + 8 behavioural sliders
-    search_criteria  extra info for seekers (max rent, move-in date, ...)
-    wgs              the flat / free room
-    wg_members       which users live in which WG (main tenant yes/no)
-    swipes           every like / pass (seeker -> WG and WG -> seeker)
-    matches          created when BOTH sides liked each other
-    messages         chat messages inside a match
-    conversation_reads  saved read position for each chat participant
-
-    A match's accepted/declined outcome is the ML model's training label.
-
-STATUS:   Tables and read/write functions implemented.
 AI NOTE:  Generated with Claude (Anthropic), 15.11.2026 – see docs/ai_usage.md
           Database functions completed with OpenAI Codex, 19.11.2026.
 ===============================================================================

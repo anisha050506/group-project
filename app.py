@@ -9,18 +9,6 @@ PURPOSE
       3. sets the default values in st.session_state (who is logged in?)
       4. decides WHICH pages appear in the menu (routing) and runs the page
 
-WHAT BELONGS HERE
-    - st.set_page_config, init_db(), session-state defaults, st.Page / st.navigation
-
-WHAT DOES NOT BELONG HERE
-    - page content (-> views/), business logic (-> core/), charts (-> components/)
-
-ROUTING LOGIC
-    not logged in            -> Log in, Register
-    logged in as "search_wg" -> Swipe, Matches, Insights | Profile, Search criteria, Offer a WG
-    logged in as "offer_wg"  -> Swipe, Matches, Insights | Profile, Offer a WG
-
-STATUS:   DONE (step 4) (works). Add new pages here when the group agrees.
 AI NOTE:  Generated with Claude (Anthropic), 15.11.2026 – see docs/ai_usage.md
 ===============================================================================
 """
