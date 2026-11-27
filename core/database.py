@@ -1,7 +1,6 @@
 """
 ===============================================================================
 FILE:     core/database.py
-OWNER:    Person B – Data
 -------------------------------------------------------------------------------
 PURPOSE
     Everything that talks to the SQLite database (data/wg_match.db).

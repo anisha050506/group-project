@@ -1,6 +1,6 @@
 # Database schema (SQLite: `data/wg_match.db`)
 
-Owner: Person B. The source of truth is `SCHEMA` in `core/database.py`. Update this file whenever the schema changes.
+The source of truth is `SCHEMA` in `core/database.py`. Update this file whenever the schema changes.
 
 For a small in-memory database in the `sqlite3` / `pandas` /
 `DB.executescript(...)` format, run `python -m data.database_example`.

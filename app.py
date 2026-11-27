@@ -1,7 +1,6 @@
 """
 ===============================================================================
 FILE:     app.py   (ENTRY POINT – start the app with:  streamlit run app.py)
-OWNER:    Person A – Routing & Accounts   (only this person edits app.py!)
 -------------------------------------------------------------------------------
 PURPOSE
     The "front door" of the app. It does exactly four things:

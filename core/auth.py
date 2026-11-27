@@ -1,7 +1,6 @@
 """
 ===============================================================================
 FILE:     core/auth.py
-OWNER:    Person A – Routing & Accounts
 -------------------------------------------------------------------------------
 PURPOSE
     Registration and login logic (no Streamlit code – the forms live in

@@ -1,7 +1,7 @@
 """
 ===============================================================================
 FILE:     core/config.py
-OWNER:    Person B – Data   (change only after agreeing with the group!)
+NOTE:     change only after agreeing with the group!
 -------------------------------------------------------------------------------
 PURPOSE
     ONE place for every name and choice list that several files share.

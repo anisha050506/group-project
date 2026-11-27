@@ -2,7 +2,6 @@
 ===============================================================================
 FILE:     data/seed_data.py       (run from the repository root with:
                                     python -m data.seed_data)
-OWNER:    Person B – Data
 -------------------------------------------------------------------------------
 PURPOSE
     Fills the database with realistic FAKE data so that everybody can test
