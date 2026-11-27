@@ -152,6 +152,7 @@ group-project/
 ├── components/        reusable page pieces
 │   ├── layout.py      login checks, session handling, sidebar and logout
 │   ├── forms.py       saved defaults for editable forms
+│   ├── onboarding.py  getting-started checklist for new users
 │   ├── cards.py       WG card / seeker card
 │   ├── chat.py        chat bubbles, conversation headers, and local timestamps
 │   └── charts.py      radar chart, score gauge, rent vs travel time, map
@@ -161,10 +162,15 @@ group-project/
 │   └── wg_match.db    the database (created automatically, not on GitHub)
 ├── docs/
 │   ├── database_schema.md      overview of all database tables
+│   ├── ml_design.md            how the ML model works and why logistic regression
 │   ├── contribution_matrix.md  who did what (shown in the video)
+│   ├── contribution_matrix.png the matrix image used in this README and the video
 │   └── ai_usage.md             list of AI aids + citation rules (shown in the video)
 ├── tests/             isolated service and Streamlit integration tests
+│   ├── test_database.py    database functions and workflows
+│   └── test_features.py    features and Streamlit pages
 ├── README.md          project description and instructions (this file, not part of the app)
+├── test_accounts.txt  logins of the fictional demo accounts
 └── requirements.txt   all libraries needed to run the app
 ```
 
