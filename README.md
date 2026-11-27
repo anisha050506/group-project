@@ -162,7 +162,7 @@ group-project/
 ├── docs/
 │   ├── database_schema.md      overview of all database tables
 │   ├── contribution_matrix.md  who did what (shown in the video)
-│   └── ai_usage.md             AI use log + citation rules (shown in the video)
+│   └── ai_usage.md             list of AI aids + citation rules (shown in the video)
 ├── tests/             isolated service and Streamlit integration tests
 ├── README.md          project description and instructions (this file, not part of the app)
 └── requirements.txt   all libraries needed to run the app
@@ -183,4 +183,4 @@ Team (sorted by last name): Anisha Ebener, Saya Gutmann, Jack Ari Meyer, Gina Ob
 
 ## 5. Use of AI
 
-AI tools were used as an aid and, where marked, to generate code. Every AI-generated code block is cited directly in the source code. The full log is in `docs/ai_usage.md`.
+AI tools were used as an aid and, where marked, to generate code. Every AI-generated code block is cited directly in the source code. The full list of aids is in `docs/ai_usage.md`.

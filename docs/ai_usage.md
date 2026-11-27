@@ -3,7 +3,7 @@
 Required by the grading criteria (no. 7) and the HSG rules on AI use. This file is the basis for the "list of aids" slide in the video.
 
 ## Rules for the team
-1. **AI as an aid** (explaining errors, brainstorming): add the tool to the log below.
+1. **AI as an aid** (explaining errors, brainstorming): add the tool to the list of aids below.
 2. **AI-generated code** used in the project **must be cited in the source code**, directly above the code:
    ```python
    # AI-generated: Claude (Anthropic), 15.11.2026. Prompt: "create a radar chart with plotly ..."
@@ -11,7 +11,7 @@ Required by the grading criteria (no. 7) and the HSG rules on AI use. This file 
    ```
 3. Before submitting, check that every AI-generated block is marked.
 
-## Log
+## List of aids
 
 | Date | Tool | What for | Where in the code |
 |---|---|---|---|
