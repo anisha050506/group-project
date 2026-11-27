@@ -219,6 +219,17 @@ def add_photo_wg(conn, today: datetime.date) -> None:
     insert(conn, "wg_members", {"wg_id": wg_id, "user_id": owner, "is_main_tenant": 1})
 
 
+def add_seeker_photos(conn) -> None:
+    """Give two existing seekers a real profile photo (images in assets/demo/,
+    referenced by a project-relative path so they load locally and on deploy)."""
+    for email, photo, gender in [
+        ("wgtest.noah.keller@student.unisg.ch", "assets/demo/seeker_noah.jpg", "male"),
+        ("wgtest.emma.weber@student.unisg.ch", "assets/demo/seeker_emma.jpg", "female"),
+    ]:
+        conn.execute("UPDATE users SET photo_path = ?, gender = ? WHERE email = ?",
+                     (photo, gender, email))
+
+
 # =============================================================================
 # Main
 # =============================================================================
@@ -342,6 +353,7 @@ def main() -> None:
         # --- 3c. Named test accounts (test_accounts.txt) --------------------------
         add_named_test_accounts(conn, today)
         add_photo_wg(conn, today)
+        add_seeker_photos(conn)
 
         # --- 4. Swipes and matches --------------------------------------------------
         profiles = {wg_id: wg_profile(conn, wg_id) for wg_id in wg_ids}
