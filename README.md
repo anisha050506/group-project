@@ -168,17 +168,18 @@ group-project/
 └── requirements.txt   all libraries needed to run the app
 ```
 
-## 4. Team & responsibilities
+## 4. Team & contributions
 
-| Member | Responsibility | Files |
-|---|---|---|
-| *Name* | | |
-| *Name* | | |
-| *Name* | | |
-| *Name* | | |
+![Contribution matrix](docs/contribution_matrix.png)
 
+| Colour | Meaning |
+|---|---|
+| Dark green | Main contributor |
+| Teal | Contributor |
+| Beige | Supporting role |
+| White | No contribution |
 
-
+Team (sorted by last name): Anisha Ebener, Saya Gutmann, Jack Ari Meyer, Gina Obringer, Guochen Zhang.
 
 ## 5. Use of AI
 
